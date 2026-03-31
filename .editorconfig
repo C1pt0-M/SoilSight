@@ -1,0 +1,29 @@
+root = true
+
+[*]
+charset = utf-8
+insert_final_newline = true
+trim_trailing_whitespace = true
+end_of_line = lf
+
+[*.ps1]
+end_of_line = crlf
+
+[*.{ts,tsx,js,mjs,css}]
+end_of_line = lf
+
+[*.py]
+end_of_line = lf
+
+[*.md]
+end_of_line = lf
+
+[*.{json,yml,yaml,toml}]
+end_of_line = lf
+
+[Makefile]
+end_of_line = lf
+
+[*.png]
+insert_final_newline = false
+trim_trailing_whitespace = false

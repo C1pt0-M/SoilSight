@@ -1,0 +1,149 @@
+.sim-chart-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.sim-chart-svg {
+  width: 100%;
+  display: block;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-default);
+  background-color: #fff;
+}
+
+.sim-chart-grid-line {
+  stroke: #e0e0e0;
+  stroke-dasharray: 4 2;
+  stroke-width: 0.5;
+}
+
+.sim-chart-axis-label {
+  fill: #666;
+  font-size: 9px;
+}
+
+.sim-chart-axis-line {
+  stroke: #999;
+  stroke-width: 1;
+}
+
+.sim-chart-line {
+  fill: none;
+  stroke-width: 1.5;
+}
+
+.sim-chart-line.baseline {
+  stroke: #999;
+  stroke-dasharray: 5 3;
+}
+
+.sim-chart-line.expected {
+  stroke: #3b82f6;
+}
+
+.sim-chart-line.conservative {
+  stroke: #f59e0b;
+}
+
+.sim-chart-line.optimistic {
+  stroke: #22c55e;
+}
+
+.sim-chart-range-fill {
+  fill: #3b82f6;
+  opacity: 0.1;
+}
+
+.sim-chart-ci-band-90 {
+  fill: #3b82f6;
+  opacity: 0.06;
+}
+
+.sim-chart-ci-band-50 {
+  fill: #3b82f6;
+  opacity: 0.14;
+}
+
+.sim-chart-ml-marker {
+  fill: #16a34a;
+  stroke: #fff;
+  stroke-width: 1.5;
+}
+
+.sim-chart-improvement-fill {
+  fill: #22c55e;
+  opacity: 0.15;
+}
+
+.sim-chart-endpoint-label text {
+  font-size: 9px;
+  font-weight: 600;
+}
+
+.sim-chart-hover-line {
+  stroke: #999;
+  stroke-dasharray: 3 2;
+  stroke-width: 1;
+}
+
+.sim-chart-tooltip {
+  position: absolute;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  pointer-events: none;
+  z-index: 10;
+  white-space: nowrap;
+}
+
+.sim-chart-tooltip-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  line-height: 1.6;
+}
+
+.sim-chart-tooltip-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.sim-chart-legend {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  padding-top: 6px;
+}
+
+.sim-chart-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: #666;
+}
+
+.sim-chart-legend-line {
+  width: 16px;
+  height: 2px;
+  display: inline-block;
+}
+
+.sim-chart-legend-swatch {
+  width: 12px;
+  height: 8px;
+  border-radius: 2px;
+  display: inline-block;
+}
+
+.sim-chart-legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}

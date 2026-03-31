@@ -1,0 +1,112 @@
+.search-bar {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 10;
+  width: 280px;
+}
+
+.search-input-wrapper {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  padding: 6px 10px;
+  gap: 6px;
+}
+
+.search-input-wrapper svg {
+  color: #94a3b8;
+  flex-shrink: 0;
+}
+
+.search-input {
+  border: none;
+  outline: none;
+  flex: 1;
+  font-size: 14px;
+  line-height: 1.5;
+  background: transparent;
+  color: #1e293b;
+  min-width: 0;
+}
+
+.search-input::placeholder {
+  color: #94a3b8;
+}
+
+.search-results {
+  margin-top: 4px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.search-result-item {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #334155;
+  transition: background-color 0.15s;
+}
+
+.search-result-item:first-child {
+  border-radius: 8px 8px 0 0;
+}
+
+.search-result-item:last-child {
+  border-radius: 0 0 8px 8px;
+}
+
+.search-result-item:only-child {
+  border-radius: 8px;
+}
+
+.search-result-item:hover {
+  background-color: #f1f5f9;
+}
+
+.search-result-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.search-type-badge {
+  flex-shrink: 0;
+  margin-left: 8px;
+  padding: 1px 6px;
+  font-size: 11px;
+  border-radius: 10px;
+  color: #fff;
+  line-height: 1.5;
+}
+
+.search-type-badge--prefecture {
+  background-color: #6366f1;
+}
+
+.search-type-badge--county {
+  background-color: #0ea5e9;
+}
+
+.search-type-badge--coordinate {
+  background-color: #10b981;
+}
+
+.search-no-results {
+  padding: 10px 12px;
+  font-size: 13px;
+  color: #94a3b8;
+  text-align: center;
+}

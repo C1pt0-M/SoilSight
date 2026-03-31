@@ -1,0 +1,20 @@
+# SoilSight Python dependencies
+# Scope: backend runtime, data scripts, and backend test validation.
+#
+# Install:
+#   python -m pip install -r requirements.txt
+#
+# Notes:
+# - xgboost is optional; train_shi_xgboost_delta.py falls back to sklearn when absent.
+# - Frontend dependencies remain managed by frontend/package.json.
+
+numpy
+pandas
+Pillow
+tifffile
+requests
+netCDF4
+scikit-learn
+joblib
+rasterio
+pytest

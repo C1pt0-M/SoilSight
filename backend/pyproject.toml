@@ -1,0 +1,13 @@
+[project]
+name = "shi-server"
+version = "0.1.0"
+description = "SoilSight backend - Soil Health Index DSS"
+requires-python = ">=3.10"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-v --tb=short"
+filterwarnings = [
+    "ignore::DeprecationWarning",
+]

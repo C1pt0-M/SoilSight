@@ -1,0 +1,200 @@
+# =========================
+# SoilSight root .gitignore
+# =========================
+
+# --- OS / Editor ---
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.idea/
+.vscode/
+.claude/
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+
+# --- Environments / secrets ---
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.crt
+
+# --- Logs ---
+*.log
+logs/
+
+# --- Node / Frontend ---
+node_modules/
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# --- Build artifacts ---
+dist/
+build/
+tmp/
+temp/
+share/
+
+# --- Runtime-generated local state ---
+data/staging/ai_plan_sessions*.json
+frontend/public/overlays/_cotton_tmp/
+cotton.json
+sugarbeet.json
+
+# --- Internal / dev docs not published ---
+AGENTS.md
+Git规范.md
+docs/
+data/10003274/
+data/patches/
+data/README.md
+data/**/*.pdf
+data/**/*.xlsx
+Makefile
+configs/
+backend/README.md
+frontend/README.md
+knowledge_base/
+backend/tests/
+frontend/tests/
+frontend/src/*.test.*
+frontend/src/**/*.test.*
+
+# --- Data (large/generated) ---
+data/raw/
+data/features/
+data/xinjiang-NDVI/
+data/xinjiang-MCD12Q1/
+data/scidb_crop_harvest_maps_v1.0/
+data/staging/*
+data/staging/archive_*/
+
+# SoilGrids temp tiles and runtime logs
+data/**/_tiles_tmp/
+data/**/*.log
+
+# Large binary data formats
+data/**/*.tif
+data/**/*.tiff
+data/**/*.nc
+data/**/*.hdf
+data/**/*.h5
+data/**/*.zip
+data/**/*.rar
+data/**/*.7z
+data/**/*.grib
+data/**/*.vrt
+data/**/*.geojson
+
+# --- Runtime bundle allowlist: backend raster inputs ---
+!data/features/
+!data/features/shi_xinjiang/
+!data/features/shi_xinjiang/*_fraction_on_modis_500m_*.tif
+!data/features/shi_xinjiang/shi_score_2010_2025.tif
+!data/features/shi_xinjiang/shi_class_2010_2025.tif
+!data/features/shi_xinjiang/shi_prod_norm_2010_2025.tif
+!data/features/shi_xinjiang/shi_stab_norm_2010_2025.tif
+!data/features/shi_xinjiang/shi_soil_norm_2010_2025.tif
+!data/features/shi_xinjiang/shi_water_norm_2010_2025.tif
+!data/features/shi_xinjiang/shi_salinity_norm_2010_2025.tif
+!data/features/shi_xinjiang/shi_terrain_norm_2010_2025.tif
+!data/features/shi_xinjiang/shi_data_quality_2010_2025.tif
+!data/features/shi_xinjiang/cotton_shi_score_2010_2025.tif
+!data/features/shi_xinjiang/cotton_shi_class_2010_2025.tif
+!data/features/shi_xinjiang/cotton_shi_prod_norm_2010_2025.tif
+!data/features/shi_xinjiang/cotton_shi_stab_norm_2010_2025.tif
+!data/features/shi_xinjiang/cotton_shi_soil_norm_2010_2025.tif
+!data/features/shi_xinjiang/cotton_shi_water_norm_2010_2025.tif
+!data/features/shi_xinjiang/cotton_shi_salinity_norm_2010_2025.tif
+!data/features/shi_xinjiang/cotton_shi_terrain_norm_2010_2025.tif
+!data/features/shi_xinjiang/cotton_shi_data_quality_2010_2025.tif
+!data/features/shi_xinjiang/sugarbeet_shi_score_2010_2025.tif
+!data/features/shi_xinjiang/sugarbeet_shi_class_2010_2025.tif
+!data/features/shi_xinjiang/sugarbeet_shi_prod_norm_2010_2025.tif
+!data/features/shi_xinjiang/sugarbeet_shi_stab_norm_2010_2025.tif
+!data/features/shi_xinjiang/sugarbeet_shi_soil_norm_2010_2025.tif
+!data/features/shi_xinjiang/sugarbeet_shi_water_norm_2010_2025.tif
+!data/features/shi_xinjiang/sugarbeet_shi_salinity_norm_2010_2025.tif
+!data/features/shi_xinjiang/sugarbeet_shi_terrain_norm_2010_2025.tif
+!data/features/shi_xinjiang/sugarbeet_shi_data_quality_2010_2025.tif
+!data/features/shi_xinjiang/maize_shi_score_2010_2025.tif
+!data/features/shi_xinjiang/maize_shi_class_2010_2025.tif
+!data/features/shi_xinjiang/maize_shi_prod_norm_2010_2025.tif
+!data/features/shi_xinjiang/maize_shi_stab_norm_2010_2025.tif
+!data/features/shi_xinjiang/maize_shi_soil_norm_2010_2025.tif
+!data/features/shi_xinjiang/maize_shi_water_norm_2010_2025.tif
+!data/features/shi_xinjiang/maize_shi_salinity_norm_2010_2025.tif
+!data/features/shi_xinjiang/maize_shi_terrain_norm_2010_2025.tif
+!data/features/shi_xinjiang/maize_shi_data_quality_2010_2025.tif
+!data/features/shi_xinjiang/era5_drought_risk_gs_2010_2025_on_modis.tif
+!data/features/shi_xinjiang/era5_heat_risk_gs_2010_2025_on_modis.tif
+
+# Keep training/intermediate ML artifacts out of the GitHub runtime bundle
+data/features/shi_xinjiang/ml/
+data/features/shi_xinjiang/ml/*.parquet
+data/features/shi_xinjiang/ml/*.csv
+data/features/shi_xinjiang/ml/xgb_delta_shi_model.json
+data/features/shi_xinjiang/ml/*.meta.json
+data/features/shi_xinjiang/ml/metrics.json
+data/features/shi_xinjiang/ml/shi_ml_dataset_meta.json
+
+# Extra modeling / pipeline inputs not required for the runtime-only repo
+data/features/shi_xinjiang/era5_ai_gs_mean_2010_2025_on_modis.tif
+data/features/shi_xinjiang/era5_ai_gs_cv_2010_2025_on_modis.tif
+data/features/shi_xinjiang/era5_rzsm_gs_mean_2010_2025_on_modis.tif
+data/features/shi_xinjiang/era5_rzsm_gs_cv_2010_2025_on_modis.tif
+data/features/shi_xinjiang/mod13a1_061_ndvi_gs_mean_2010_2025.tif
+data/features/shi_xinjiang/mod13a1_061_ndvi_gs_cv_2010_2025.tif
+data/features/shi_xinjiang/mod13a1_061_ndvi_gs_peak_mean_2010_2025.tif
+data/features/shi_xinjiang/mod13a1_061_ndvi_gs_valid_years_2010_2025.tif
+data/features/shi_xinjiang/soilgrids_*_on_modis.tif
+data/features/shi_xinjiang/salinity_isric_salmap2016_on_modis.tif
+data/features/shi_xinjiang/terrain_dem_on_modis_500m.tif
+data/features/shi_xinjiang/terrain_slope_on_modis_500m.tif
+data/features/shi_xinjiang/*_profile_mask_2010_2025.tif
+data/features/shi_xinjiang/shi_ai_norm_2010_2025.tif
+data/features/shi_xinjiang/shi_rzsm_norm_2010_2025.tif
+data/features/shi_xinjiang/shi_soc_norm_2010_2025.tif
+data/features/shi_xinjiang/shi_ph_norm_2010_2025.tif
+data/features/shi_xinjiang/shi_cec_norm_2010_2025.tif
+data/features/shi_xinjiang/shi_clay_norm_2010_2025.tif
+
+# --- Frontend generated overlays ---
+frontend/public/overlays/*
+!frontend/public/overlays/overlay_meta.json
+!frontend/public/overlays/cropland_overlay.png
+!frontend/public/overlays/cotton_shi_class_overlay.png
+!frontend/public/overlays/sugarbeet_shi_class_overlay.png
+!frontend/public/overlays/maize_shi_class_overlay.png
+!frontend/public/overlays/drought_risk_overlay.png
+!frontend/public/overlays/heat_risk_overlay.png
+!frontend/public/overlays/soil_norm_overlay.png
+!frontend/public/overlays/water_norm_overlay.png
+
+# --- Keep only runtime scripts ---
+scripts/*
+!scripts/dev_stack.ps1
+!scripts/start_backend.ps1
+!scripts/start_frontend.ps1
+
+# --- Keep required runtime metadata ---
+!data/**/xj_province.geojson
+!data/**/xj_prefectures.geojson
+!data/**/xj_counties.geojson

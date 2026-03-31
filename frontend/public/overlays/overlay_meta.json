@@ -1,0 +1,69 @@
+{
+  "region_id": "xinjiang",
+  "baseline_years": [
+    2010,
+    2025
+  ],
+  "time_window": [
+    5,
+    6,
+    7,
+    8,
+    9
+  ],
+  "asset_version": 1774875879,
+  "coordinates": [
+    [
+      68.28977268307139,
+      49.18333332862164
+    ],
+    [
+      112.62997550672867,
+      49.18333332862164
+    ],
+    [
+      112.62997550672867,
+      34.33225933695565
+    ],
+    [
+      68.28977268307139,
+      34.33225933695565
+    ]
+  ],
+  "shape": [
+    3564,
+    4134
+  ],
+  "aoi_geojson": "data\\staging\\aoi\\xinjiang_province.geojson",
+  "stats": {
+    "aoi_pixels": 9335813,
+    "evaluated_pixels": 410963,
+    "evaluated_ratio": 0.04402005481472262,
+    "class_counts": {
+      "not_evaluated": 8924850,
+      "unhealthy": 17449,
+      "subhealthy": 325785,
+      "healthy": 67729
+    },
+    "cropland_positive_pixels": 575401,
+    "cropland_positive_ratio": 0.061633732380886375,
+    "class_nodata": null,
+    "crop_nodata": -9999.0,
+    "out_res_m": 556.6
+  },
+  "extra_overlays": [
+    "cotton_shi_class_overlay.png",
+    "sugarbeet_shi_class_overlay.png",
+    "maize_shi_class_overlay.png",
+    "drought_risk_overlay.png",
+    "heat_risk_overlay.png",
+    "soil_norm_overlay.png",
+    "water_norm_overlay.png",
+    "cotton_shi_soil_norm_overlay.png",
+    "sugarbeet_shi_soil_norm_overlay.png",
+    "maize_shi_soil_norm_overlay.png",
+    "cotton_shi_water_norm_overlay.png",
+    "sugarbeet_shi_water_norm_overlay.png",
+    "maize_shi_water_norm_overlay.png"
+  ]
+}

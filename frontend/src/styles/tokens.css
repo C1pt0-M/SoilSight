@@ -1,0 +1,124 @@
+:root {
+  /* Colors - Earthy & Natural */
+  --color-healthy: #2e7d32;      /* Match SHI overlay */
+  --color-subhealthy: #f9a825;   /* Match SHI overlay */
+  --color-unhealthy: #c62828;    /* Match SHI overlay */
+  --color-unevaluated: #c4beb0;  /* Match SHI overlay */
+  --color-primary: #8b9a5b;      /* Sage Green */
+  --color-primary-dark: #6b7a42;
+  --color-primary-light: #f1f5e9;
+  --color-warning: #bd842d;      /* Ochre */
+  
+  /* Text - Avoiding Pure Black */
+  --text-primary: #3e3a36;       /* Warm Charcoal */
+  --text-secondary: #5c554e;     /* Deep Stone */
+  --text-muted: #8c8278;         /* Dust */
+
+  /* Backgrounds */
+  --bg-page: #faf6f1;            /* Warm Beige */
+  --bg-card: #ffffff;
+  --border-color: #e5d3b3;       /* Earth Linen */
+
+  /* Typography - Preferring slightly more 'handcrafted' feel */
+  --font-family-main: 'PingFang SC', 'Noto Serif SC', 'Georgia', serif;
+  --font-family-sans: 'PingFang SC', 'Noto Sans SC', sans-serif;
+  
+  --fz-title: 24px;
+  --fz-card-title: 18px;
+  --fz-body: 15px;
+  --fz-helper: 13px;
+  --fz-score: 42px;
+
+  /* Spacing & Organic Shapes */
+  --spacing-unit: 8px;
+  --radius-default: 1.5rem;      /* Organic curves */
+  --radius-large: 2.5rem;
+  --radius-blob: 30% 70% 70% 30% / 30% 30% 70% 70%; /* Blob placeholder */
+  
+  /* Shadow - Softer and more diffused */
+  --shadow-sm: 0 2px 4px rgba(62, 58, 54, 0.04);
+  --shadow-md: 0 8px 16px -4px rgba(62, 58, 54, 0.08);
+  --shadow-lg: 0 20px 25px -5px rgba(62, 58, 54, 0.1);
+
+  /* Layout */
+  --header-height: 72px;
+  --sidebar-width: 300px;
+  --drawer-width: 380px;
+
+  /* Textures */
+  --texture-paper: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-family-sans);
+  background-color: var(--bg-page);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: 1.6;
+}
+
+/* Subtle Paper Texture Overlay */
+body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  opacity: 0.03;
+  z-index: 9999;
+  background-image: var(--texture-paper);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-family-main);
+  color: var(--text-primary);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+/* Base Utility for Organic Cards */
+.organic-card {
+  background: var(--bg-card);
+  border-radius: var(--radius-default);
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border-color);
+  padding: calc(var(--spacing-unit) * 3);
+}
+
+button {
+  cursor: pointer;
+  border-radius: 9999px; /* Pill shape for buttons */
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Responsive Breakpoints */
+@media (max-width: 1200px) {
+  :root {
+    --sidebar-width: 260px;
+    --drawer-width: 340px;
+  }
+}
+
+@media (max-width: 1024px) {
+  :root {
+    --sidebar-width: 240px;
+    --drawer-width: 320px;
+  }
+
+  .ledger-main {
+    padding: 24px 20px;
+  }
+
+  .summary-cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
