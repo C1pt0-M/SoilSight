@@ -2,6 +2,7 @@ import React, { forwardRef, useCallback, useImperativeHandle, useMemo, useRef, u
 import type { PercentileBandPoint } from '../../models/shi';
 import {
   buildStageTicks,
+  buildSmoothStagePath,
   formatStageTickLabel,
   formatTooltipStage,
   getStageExtent,
@@ -154,9 +155,8 @@ const SimChart = forwardRef<SimChartHandle, SimChartProps>(({ series, percentile
     [yMin, yMax],
   );
 
-  const polyline = useCallback(
-    (points: Array<{ stageIndex: number; shi: number }>) =>
-      points.map((p) => `${mapX(p.stageIndex)},${mapY(p.shi)}`).join(' '),
+  const smoothPath = useCallback(
+    (points: Array<{ stageIndex: number; shi: number }>) => buildSmoothStagePath(points, mapX, mapY),
     [mapX, mapY],
   );
 
@@ -331,8 +331,44 @@ const SimChart = forwardRef<SimChartHandle, SimChartProps>(({ series, percentile
     ].filter((r) => r.value !== undefined);
   }, [hover, hasBands]);
 
+  const summary = useMemo(() => {
+    if (!endpoints.baselineStart || !endpoints.expectedEnd) return null;
+    const delta = endpoints.expectedEnd.shi - endpoints.baselineStart.shi;
+    return {
+      current: endpoints.baselineStart.shi,
+      target: endpoints.expectedEnd.shi,
+      delta,
+    };
+  }, [endpoints]);
+
+  const expectedNodes = useMemo(
+    () => [...series.expected].sort((left, right) => left.stageIndex - right.stageIndex),
+    [series.expected],
+  );
+
+  const baselineNodes = useMemo(
+    () => [...series.baseline].sort((left, right) => left.stageIndex - right.stageIndex),
+    [series.baseline],
+  );
+
   return (
     <div className="sim-chart-wrapper">
+      {summary && (
+        <div className="sim-chart-summary">
+          <div className="sim-chart-summary-item">
+            <span>当前</span>
+            <strong>{summary.current.toFixed(1)}</strong>
+          </div>
+          <div className="sim-chart-summary-item accent">
+            <span>第三阶段</span>
+            <strong>{summary.target.toFixed(1)}</strong>
+          </div>
+          <div className={`sim-chart-summary-item ${summary.delta >= 0 ? 'positive' : 'negative'}`}>
+            <span>总提升</span>
+            <strong>{summary.delta >= 0 ? '+' : ''}{summary.delta.toFixed(1)}</strong>
+          </div>
+        </div>
+      )}
       <svg
         ref={svgRef}
         className="sim-chart-svg"
@@ -422,18 +458,47 @@ const SimChart = forwardRef<SimChartHandle, SimChartProps>(({ series, percentile
         )}
 
         {/* Data lines */}
-        <polyline points={polyline(series.baseline)} className="sim-chart-line baseline" />
+        <path d={smoothPath(series.baseline)} className="sim-chart-line baseline" />
         {hasBands ? (
           // Monte Carlo mode: only show median line
-          <polyline points={polyline(series.expected)} className="sim-chart-line expected" />
+          <path d={smoothPath(series.expected)} className="sim-chart-line expected" />
         ) : (
           // Legacy mode: show all 4 lines
           <>
-            <polyline points={polyline(series.expected)} className="sim-chart-line expected" />
-            <polyline points={polyline(series.conservative)} className="sim-chart-line conservative" />
-            <polyline points={polyline(series.optimistic)} className="sim-chart-line optimistic" />
+            <path d={smoothPath(series.expected)} className="sim-chart-line expected" />
+            <path d={smoothPath(series.conservative)} className="sim-chart-line conservative" />
+            <path d={smoothPath(series.optimistic)} className="sim-chart-line optimistic" />
           </>
         )}
+
+        {/* Stage nodes */}
+        {baselineNodes.map((point) => (
+          <circle
+            key={`baseline-node-${point.stageIndex}`}
+            cx={mapX(point.stageIndex)}
+            cy={mapY(point.shi)}
+            r={2.5}
+            className="sim-chart-node baseline"
+          />
+        ))}
+        {expectedNodes.map((point) => (
+          <g key={`expected-node-${point.stageIndex}`} className="sim-chart-stage-node">
+            <circle
+              cx={mapX(point.stageIndex)}
+              cy={mapY(point.shi)}
+              r={4}
+              className="sim-chart-node expected"
+            />
+            <text
+              x={mapX(point.stageIndex)}
+              y={mapY(point.shi) - 10}
+              className="sim-chart-stage-value"
+              textAnchor="middle"
+            >
+              {point.shi.toFixed(1)}
+            </text>
+          </g>
+        ))}
 
         {/* ML prediction marker */}
         {typeof mlPredEndShi === 'number' && maxStageIndex > 0 && (

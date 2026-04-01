@@ -1,6 +1,8 @@
 .sim-chart-wrapper {
   position: relative;
   width: 100%;
+  display: grid;
+  gap: 8px;
 }
 
 .sim-chart-svg {
@@ -29,7 +31,9 @@
 
 .sim-chart-line {
   fill: none;
-  stroke-width: 1.5;
+  stroke-width: 2.25;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .sim-chart-line.baseline {
@@ -75,6 +79,27 @@
   opacity: 0.15;
 }
 
+.sim-chart-node {
+  stroke: #fff;
+  stroke-width: 1.5;
+}
+
+.sim-chart-node.baseline {
+  fill: #999;
+  opacity: 0.9;
+}
+
+.sim-chart-node.expected {
+  fill: #3b82f6;
+  filter: drop-shadow(0 2px 6px rgba(59, 130, 246, 0.22));
+}
+
+.sim-chart-stage-value {
+  fill: #1f3f8b;
+  font-size: 9px;
+  font-weight: 700;
+}
+
 .sim-chart-endpoint-label text {
   font-size: 9px;
   font-weight: 600;
@@ -116,6 +141,7 @@
 .sim-chart-legend {
   display: flex;
   justify-content: center;
+  flex-wrap: wrap;
   gap: 12px;
   padding-top: 6px;
 }
@@ -146,4 +172,58 @@
   height: 8px;
   border-radius: 50%;
   display: inline-block;
+}
+
+.sim-chart-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.sim-chart-summary-item {
+  border: 1px solid var(--border-color);
+  background: #fff;
+  border-radius: 10px;
+  padding: 8px 10px;
+  display: grid;
+  gap: 2px;
+}
+
+.sim-chart-summary-item span {
+  font-size: 11px;
+  color: #6b7280;
+  font-weight: 700;
+}
+
+.sim-chart-summary-item strong {
+  font-size: 18px;
+  color: #1f2937;
+  line-height: 1.1;
+}
+
+.sim-chart-summary-item.accent {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+}
+
+.sim-chart-summary-item.accent strong {
+  color: #1d4ed8;
+}
+
+.sim-chart-summary-item.positive {
+  background: #ecfdf5;
+  border-color: #bbf7d0;
+}
+
+.sim-chart-summary-item.positive strong {
+  color: #15803d;
+}
+
+.sim-chart-summary-item.negative {
+  background: #fef2f2;
+  border-color: #fecaca;
+}
+
+.sim-chart-summary-item.negative strong {
+  color: #b91c1c;
 }
