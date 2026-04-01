@@ -20,6 +20,7 @@ import type {
   SensitivityItem,
 } from '../models/shi';
 import { attachKnowledgeHitsToMessages, normalizeKnowledgeHits } from '../utils/messageReferences.js';
+import { DEFAULT_STAGE_LABELS } from '../utils/stageLabels.js';
 import { parsePercentileBands } from './simulationParser.js';
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '').trim().replace(/\/$/, '');
@@ -750,7 +751,7 @@ export class SHIService {
       simulation: {
         progressMode: (raw.simulation.progress_mode as ProgressMode | undefined) ?? 'stable',
         stageCount: raw.simulation.stage_count ?? 4,
-        stageLabels: Array.isArray(raw.simulation.stage_labels) ? raw.simulation.stage_labels.map((item) => String(item)) : ['当前', '第一阶段', '第二阶段', '第三阶段'],
+        stageLabels: Array.isArray(raw.simulation.stage_labels) ? raw.simulation.stage_labels.map((item) => String(item)) : [...DEFAULT_STAGE_LABELS],
         series: {
           baseline: raw.simulation.series.baseline.map((p) => ({
             stageIndex: Number(p.stage_index),

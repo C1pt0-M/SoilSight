@@ -10,6 +10,7 @@ import type {
   ProgressMode,
   ScenarioPackId,
 } from '../models/shi';
+import { normalizeSimulationResult } from '../utils/simulationResultNormalization.js';
 
 export type DrawerTab = 'assessment' | 'plan' | 'simulation';
 export type AsyncStatus = 'idle' | 'loading' | 'ready' | 'error';
@@ -81,7 +82,8 @@ export const usePlanStore = create<PlanState>()(
       setPlanError: (planError) => set({ planError }),
       setSimulationError: (simulationError) => set({ simulationError }),
       setPlanResult: (planResult) => set({ planResult }),
-      setSimulationResult: (simulationResult) => set({ simulationResult }),
+      setSimulationResult: (simulationResult) =>
+        set({ simulationResult: normalizeSimulationResult(simulationResult) }),
       setChatDraft: (chatDraft) => set({ chatDraft }),
       setChatMessages: (chatMessages) => set({ chatMessages }),
       appendChatMessage: (msg) => set((state) => ({ chatMessages: [...state.chatMessages, msg] })),
@@ -117,11 +119,13 @@ export const usePlanStore = create<PlanState>()(
       }),
       merge: (persistedState, currentState) => {
         const partial = (persistedState as Partial<PlanState> | undefined) ?? {};
+        const normalizedSimulationResult = normalizeSimulationResult(partial.simulationResult ?? null);
         return {
           ...currentState,
           ...partial,
+          simulationResult: normalizedSimulationResult,
           planStatus: partial.planResult ? 'ready' : 'idle',
-          simulationStatus: partial.simulationResult ? 'ready' : 'idle',
+          simulationStatus: normalizedSimulationResult ? 'ready' : 'idle',
           planError: null,
           simulationError: null,
         };

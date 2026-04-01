@@ -6,6 +6,7 @@ import type {
   ProgressMode,
   ScenarioPackId,
 } from '../../models/shi';
+import { normalizeSimulationResult } from '../../utils/simulationResultNormalization.js';
 
 export type SimulationPlanState =
   | 'missing_plan'
@@ -71,10 +72,11 @@ export const isSimulationResultCurrent = (
   simulationResult: PlanSimulateResponse | null,
   inputs: SimulationResultInputs,
 ): boolean => {
-  if (!simulationResult) return false;
+  const normalized = normalizeSimulationResult(simulationResult);
+  if (!normalized) return false;
   return (
-    simulationResult.sessionId === inputs.sessionId &&
-    simulationResult.scenarioPack.id === inputs.scenarioPack &&
-    simulationResult.simulation.progressMode === inputs.progressMode
+    normalized.sessionId === inputs.sessionId &&
+    normalized.scenarioPack.id === inputs.scenarioPack &&
+    normalized.simulation.progressMode === inputs.progressMode
   );
 };

@@ -1,3 +1,5 @@
+import { DEFAULT_STAGE_LABELS } from '../../utils/stageLabels.js';
+
 const normalizeStageIndices = (stageIndices: number[]): number[] =>
   stageIndices.filter((stageIndex) => Number.isFinite(stageIndex)).sort((a, b) => a - b);
 
@@ -46,12 +48,11 @@ export const formatStageTickLabel = (
   stageLabels?: string[],
 ): string => {
   if (stageLabels && stageLabels[stageIndex]) return stageLabels[stageIndex];
-  if (stageIndex === 0) return '当前';
-  return `第${stageIndex}阶段`;
+  return DEFAULT_STAGE_LABELS[stageIndex] ?? `Stage ${stageIndex}`;
 };
 
 export const formatTooltipStage = (stageIndex: number, stageLabels?: string[]): string => (
   stageLabels && stageLabels[stageIndex]
     ? stageLabels[stageIndex]
-    : (stageIndex === 0 ? '当前' : `第${stageIndex}阶段`)
+    : (DEFAULT_STAGE_LABELS[stageIndex] ?? `Stage ${stageIndex}`)
 );
