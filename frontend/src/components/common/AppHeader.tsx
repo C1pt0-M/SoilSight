@@ -1,5 +1,6 @@
 import { BarChart3, Bot, Info, Layout, Map } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
+import { preloadRouteChunk } from '../../app/routeChunks';
 import { useAssistantStore } from '../../store/assistantStore';
 import './AppHeader.css';
 
@@ -20,7 +21,12 @@ const AppHeader: React.FC = () => {
           <Map size={16} />
           <span>地图评估</span>
         </NavLink>
-        <NavLink to="/ledger" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+        <NavLink
+          to="/ledger"
+          className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+          onMouseEnter={() => void preloadRouteChunk('ledger')}
+          onFocus={() => void preloadRouteChunk('ledger')}
+        >
           <BarChart3 size={16} />
           <span>区域统计</span>
         </NavLink>
@@ -28,11 +34,18 @@ const AppHeader: React.FC = () => {
           to="/ai"
           className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
           onClick={() => openGeneralAssistant()}
+          onMouseEnter={() => void preloadRouteChunk('ai')}
+          onFocus={() => void preloadRouteChunk('ai')}
         >
           <Bot size={16} />
           <span>规划工作台</span>
         </NavLink>
-        <NavLink to="/about" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+        <NavLink
+          to="/about"
+          className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+          onMouseEnter={() => void preloadRouteChunk('about')}
+          onFocus={() => void preloadRouteChunk('about')}
+        >
           <Info size={16} />
           <span>系统说明</span>
         </NavLink>

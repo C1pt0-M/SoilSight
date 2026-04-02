@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react';
 import {
   AlertCircle,
   AlertTriangle,
@@ -22,9 +22,17 @@ import { usePlanStore } from '../../store/planStore';
 import { useResultStore } from '../../store/resultStore';
 import { getSimulationPanelState, getSimulationPlanState, isSimulationResultCurrent } from './resultDrawerSimulationState';
 import { progressModeLabel } from '../../utils/progressMode';
-import SimChart from './SimChart';
 import type { SimChartHandle } from './SimChart';
 import './ResultDrawer.css';
+
+const loadSimChart = () => import('./SimChart');
+const SimChart = lazy(loadSimChart);
+
+const SimChartFallback = () => (
+  <div style={{ minHeight: '220px', display: 'grid', placeItems: 'center', color: '#8c8278' }}>
+    模拟图表加载中...
+  </div>
+);
 
 const isEvaluatedResult = (result: ClickResult): result is ClickResultEvaluated => result.status === 'evaluated';
 const isNotEvaluatedResult = (result: ClickResult): result is ClickResultNotEvaluated => result.status === 'not_evaluated';
@@ -234,6 +242,7 @@ const ResultDrawer: React.FC = () => {
   // Fetch model info (feature importance) when simulation tab first activated
   useEffect(() => {
     if (activeTab !== 'simulation') return;
+    void loadSimChart();
     let cancelled = false;
     shiService.getModelInfo(activeScoreProfileId).then((info) => {
       if (cancelled) return;
@@ -1043,6 +1052,7 @@ const ResultDrawer: React.FC = () => {
           <div className="outdated-tip">当前图表已按新选择完成模拟，但上方规划摘要仍是旧设置。</div>
         )}
         <div className="sim-chart-toolbar">
+          <Suspense fallback={<SimChartFallback />}>
             <SimChart
               ref={chartRef}
               series={currentSimulationResult.simulation.series}
@@ -1050,6 +1060,7 @@ const ResultDrawer: React.FC = () => {
               mlPredEndShi={mlRef?.predEndShi}
               stageLabels={currentSimulationResult.simulation.stageLabels}
             />
+          </Suspense>
           <button className="action-btn secondary export-chart-btn" onClick={() => chartRef.current?.exportPNG()}>
             <Download size={14} />
             <span>导出图表</span>

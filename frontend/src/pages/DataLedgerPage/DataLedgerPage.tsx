@@ -1,13 +1,22 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { Suspense, lazy, useCallback, useEffect, useMemo, useState } from 'react';
 import { ArrowUpDown, Download, Eye, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import AppHeader from '../../components/common/AppHeader';
 import { shiService } from '../../services/shiService';
 import { useMapStore } from '../../store/mapStore';
 import { scoreProfileIdToLayer } from '../../store/mapStore';
-import DistributionChart from './DistributionChart';
-import PrefectureChart from './PrefectureChart';
 import './DataLedgerPage.css';
+
+const loadDistributionChart = () => import('./DistributionChart');
+const loadPrefectureChart = () => import('./PrefectureChart');
+const DistributionChart = lazy(loadDistributionChart);
+const PrefectureChart = lazy(loadPrefectureChart);
+
+const ChartFallback = () => (
+  <div style={{ minHeight: '280px', display: 'grid', placeItems: 'center', color: '#8c8278' }}>
+    图表加载中...
+  </div>
+);
 
 interface CountyStat {
   name: string;
@@ -74,6 +83,11 @@ const DataLedgerPage: React.FC = () => {
             thresholdLabel: '35/65',
             scopeNote: '甜菜区域统计按甜菜主导像元汇总，沿用当前比赛版统一展示阈值观察甜菜区差异。',
           };
+
+  useEffect(() => {
+    void loadDistributionChart();
+    void loadPrefectureChart();
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -295,11 +309,15 @@ const DataLedgerPage: React.FC = () => {
             <div className="charts-row">
               <div className="chart-card">
                 <h3 className="chart-title">{cropLabel}区域分级结构</h3>
-                <DistributionChart stats={summaryScopeStats} />
+                <Suspense fallback={<ChartFallback />}>
+                  <DistributionChart stats={summaryScopeStats} />
+                </Suspense>
               </div>
               <div className="chart-card">
                 <h3 className="chart-title">{cropLabel}地州画像对比</h3>
-                <PrefectureChart stats={stats} />
+                <Suspense fallback={<ChartFallback />}>
+                  <PrefectureChart stats={stats} />
+                </Suspense>
               </div>
             </div>
           )}
