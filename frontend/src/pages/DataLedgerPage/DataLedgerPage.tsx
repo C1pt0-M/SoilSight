@@ -1,10 +1,11 @@
-import React, { Suspense, lazy, useCallback, useEffect, useMemo, useState } from 'react';
+import React, { Suspense, lazy, useCallback, useEffect, useMemo, useReducer, useState } from 'react';
 import { ArrowUpDown, Download, Eye, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import AppHeader from '../../components/common/AppHeader';
 import { shiService } from '../../services/shiService';
 import { useMapStore } from '../../store/mapStore';
 import { scoreProfileIdToLayer } from '../../store/mapStore';
+import { createInitialDataLedgerState, dataLedgerReducer } from './dataLedgerState';
 import './DataLedgerPage.css';
 
 const loadDistributionChart = () => import('./DistributionChart');
@@ -54,9 +55,11 @@ const SortHeader: React.FC<SortHeaderProps> = ({ label, field, active, onSort })
 );
 
 const DataLedgerPage: React.FC = () => {
-  const [stats, setStats] = useState<CountyStat[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [requestState, dispatch] = useReducer(
+    dataLedgerReducer<CountyStat>,
+    undefined,
+    () => createInitialDataLedgerState<CountyStat>(),
+  );
   const [sortKey, setSortKey] = useState<SortKey>('shi_mean');
   const [sortAsc, setSortAsc] = useState(false);
   const [filter, setFilter] = useState('');
@@ -91,18 +94,20 @@ const DataLedgerPage: React.FC = () => {
 
   useEffect(() => {
     let cancelled = false;
+    dispatch({ type: 'request_started' });
     shiService
       .getCountyStats(activeScoreProfileId)
       .then((data) => {
         if (!cancelled) {
-          setStats(data);
-          setLoading(false);
+          dispatch({ type: 'request_succeeded', stats: data });
         }
       })
       .catch((err) => {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : '加载失败');
-          setLoading(false);
+          dispatch({
+            type: 'request_failed',
+            error: err instanceof Error ? err.message : '加载失败',
+          });
         }
       });
     return () => { cancelled = true; };
@@ -110,9 +115,6 @@ const DataLedgerPage: React.FC = () => {
 
   const switchScoreProfile = useCallback((profileId: 'cotton' | 'sugarbeet' | 'maize') => {
     if (profileId === activeScoreProfileId) return;
-    setLoading(true);
-    setError(null);
-    setStats([]);
     setActiveScoreProfileId(profileId);
     setActiveLayer(scoreProfileIdToLayer(profileId));
   }, [activeScoreProfileId, setActiveLayer, setActiveScoreProfileId]);
@@ -129,7 +131,7 @@ const DataLedgerPage: React.FC = () => {
   }, []);
 
   const filtered = useMemo(() => {
-    let list = stats;
+    let list = requestState.stats;
     if (filter.trim()) {
       const q = filter.trim().toLowerCase();
       list = list.filter((s) => s.name.toLowerCase().includes(q));
@@ -143,7 +145,7 @@ const DataLedgerPage: React.FC = () => {
       return sortAsc ? (av as number) - (bv as number) : (bv as number) - (av as number);
     });
     return sorted;
-  }, [stats, filter, sortKey, sortAsc]);
+  }, [requestState.stats, filter, sortKey, sortAsc]);
 
   const handleView = useCallback((item: CountyStat) => {
     const [lon, lat] = item.centroid;
@@ -177,9 +179,9 @@ const DataLedgerPage: React.FC = () => {
   const gradeThresholds = profileSummary.gradeThresholds;
 
   const summaryScopeStats = useMemo(() => {
-    const counties = stats.filter((item) => item.type === 'county');
-    return counties.length > 0 ? counties : stats;
-  }, [stats]);
+    const counties = requestState.stats.filter((item) => item.type === 'county');
+    return counties.length > 0 ? counties : requestState.stats;
+  }, [requestState.stats]);
 
   const levelClass = (score: number) => {
     if (score >= gradeThresholds.high) return 'level-healthy';
@@ -266,16 +268,16 @@ const DataLedgerPage: React.FC = () => {
             </div>
           </div>
 
-          {loading && (
+          {requestState.loading && (
             <div className="stats-loading">
               <Loader2 size={24} className="spin" />
               <span>正在统计各区县{cropLabel}评分数据...</span>
             </div>
           )}
 
-          {error && <div className="stats-error">{error}</div>}
+          {requestState.error && <div className="stats-error">{requestState.error}</div>}
 
-          {!loading && !error && summaryData && (
+          {!requestState.loading && !requestState.error && summaryData && (
             <div className="summary-cards">
               <div className="summary-card">
                 <div className="summary-card-label">分析覆盖面积</div>
@@ -305,7 +307,7 @@ const DataLedgerPage: React.FC = () => {
             </div>
           )}
 
-          {!loading && !error && (
+          {!requestState.loading && !requestState.error && (
             <div className="charts-row">
               <div className="chart-card">
                 <h3 className="chart-title">{cropLabel}区域分级结构</h3>
@@ -316,13 +318,13 @@ const DataLedgerPage: React.FC = () => {
               <div className="chart-card">
                 <h3 className="chart-title">{cropLabel}地州画像对比</h3>
                 <Suspense fallback={<ChartFallback />}>
-                  <PrefectureChart stats={stats} />
+                  <PrefectureChart stats={requestState.stats} />
                 </Suspense>
               </div>
             </div>
           )}
 
-          {!loading && !error && (
+          {!requestState.loading && !requestState.error && (
             <div className="organic-card table-card">
               <div className="table-wrapper">
                 <table className="stats-table">

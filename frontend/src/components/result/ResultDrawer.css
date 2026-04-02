@@ -758,6 +758,10 @@
   align-items: center;
   cursor: pointer;
   background-color: var(--bg-page);
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  color: inherit;
 }
 
 .history-item:hover {

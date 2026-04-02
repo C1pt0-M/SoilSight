@@ -21,6 +21,7 @@ import type { MapLayerId } from '../../store/mapStore';
 import { usePlanStore } from '../../store/planStore';
 import { useResultStore } from '../../store/resultStore';
 import { getSimulationPanelState, getSimulationPlanState, isSimulationResultCurrent } from './resultDrawerSimulationState';
+import { buildHistoryItemKey } from './resultHistory';
 import { progressModeLabel } from '../../utils/progressMode';
 import type { SimChartHandle } from './SimChart';
 import './ResultDrawer.css';
@@ -31,6 +32,16 @@ const SimChart = lazy(loadSimChart);
 const SimChartFallback = () => (
   <div style={{ minHeight: '220px', display: 'grid', placeItems: 'center', color: '#8c8278' }}>
     模拟图表加载中...
+  </div>
+);
+
+const PrimaryValueSection: React.FC<{ value: string; label: string; tag?: React.ReactNode }> = ({ value, label, tag }) => (
+  <div className="score-section">
+    <div className="score-main">
+      <span className="score-value">{value}</span>
+      <span className="score-label">{label}</span>
+    </div>
+    {tag}
   </div>
 );
 
@@ -368,41 +379,33 @@ const ResultDrawer: React.FC = () => {
     );
   };
 
-  const renderPrimaryValue = (value: string, label: string, tag?: React.ReactNode) => (
-    <div className="score-section">
-      <div className="score-main">
-        <span className="score-value">{value}</span>
-        <span className="score-label">{label}</span>
-      </div>
-      {tag}
-    </div>
-  );
-
   const renderLayerSpecificValue = () => {
     if (!evaluatedResult) return null;
     switch (activeLayer) {
       case 'cropland': {
         const croplandValue = evaluatedResult.components.croplandFraction;
         const state = getCroplandMaskState(croplandValue);
-        return renderPrimaryValue(
-          state?.label || '—',
-          '耕地分布',
-          state ? <div className={`level-tag ${state.className}`}>掩膜值 {croplandValue >= 0.5 ? '1' : '0'}</div> : undefined
+        return (
+          <PrimaryValueSection
+            value={state?.label || '—'}
+            label="耕地分布"
+            tag={state ? <div className={`level-tag ${state.className}`}>掩膜值 {croplandValue >= 0.5 ? '1' : '0'}</div> : undefined}
+          />
         );
       }
       case 'soil_norm': {
         const soilValue = evaluatedResult.components.soilBaseNorm ?? evaluatedResult.components.soilNorm;
-        return renderPrimaryValue(formatPercent(soilValue, 0), '土壤本底');
+        return <PrimaryValueSection value={formatPercent(soilValue, 0)} label="土壤本底" />;
       }
       case 'water_norm': {
         const waterValue = evaluatedResult.components.waterSupplyNorm ?? evaluatedResult.components.waterNorm;
-        return renderPrimaryValue(formatPercent(waterValue, 0), '供水支撑');
+        return <PrimaryValueSection value={formatPercent(waterValue, 0)} label="供水支撑" />;
       }
       case 'drought_risk': {
         const droughtValue = evaluatedResult.risk?.droughtRisk;
         return (
           <>
-            {renderPrimaryValue(formatPercent(droughtValue, 0), '干旱风险')}
+            <PrimaryValueSection value={formatPercent(droughtValue, 0)} label="干旱风险" />
             {evaluatedResult.risk?.riskLevel && (
               <div className={`risk-level-chip level-${evaluatedResult.risk.riskLevel}`}>综合风险等级：{evaluatedResult.risk.riskLevel}</div>
             )}
@@ -413,7 +416,7 @@ const ResultDrawer: React.FC = () => {
         const heatValue = evaluatedResult.risk?.heatRisk;
         return (
           <>
-            {renderPrimaryValue(formatPercent(heatValue, 0), '热胁迫风险')}
+            <PrimaryValueSection value={formatPercent(heatValue, 0)} label="热胁迫风险" />
             {evaluatedResult.risk?.riskLevel && (
               <div className={`risk-level-chip level-${evaluatedResult.risk.riskLevel}`}>综合风险等级：{evaluatedResult.risk.riskLevel}</div>
             )}
@@ -561,15 +564,15 @@ const ResultDrawer: React.FC = () => {
         return (
           <div className="result-success">
             {renderLayerContext()}
-            {renderPrimaryValue(
-              croplandState?.label || '未判定',
-              '耕地分布',
-              croplandState ? (
+            <PrimaryValueSection
+              value={croplandState?.label || '未判定'}
+              label="耕地分布"
+              tag={croplandState ? (
                 <div className={`level-tag ${croplandState.className}`}>
                   掩膜值 {notEvaluatedResult?.croplandFraction !== undefined && notEvaluatedResult.croplandFraction >= 0.5 ? '1' : '0'}
                 </div>
-              ) : undefined
-            )}
+              ) : undefined}
+            />
             <div className="status-card warning compact">
               <AlertCircle size={16} />
               <span className="partial-data-hint">
@@ -602,7 +605,10 @@ const ResultDrawer: React.FC = () => {
         return (
           <div className="result-success">
             {renderLayerContext()}
-            {renderPrimaryValue(formatPercent(riskValue, 0), activeLayer === 'drought_risk' ? '干旱风险' : '热胁迫风险')}
+            <PrimaryValueSection
+              value={formatPercent(riskValue, 0)}
+              label={activeLayer === 'drought_risk' ? '干旱风险' : '热胁迫风险'}
+            />
             {notEvaluatedResult?.risk?.riskLevel && (
               <div className={`risk-level-chip level-${notEvaluatedResult.risk.riskLevel}`}>综合风险等级：{notEvaluatedResult.risk.riskLevel}</div>
             )}
@@ -807,10 +813,10 @@ const ResultDrawer: React.FC = () => {
         )}
 
         <div className="advice-section">
-          <h4 className="sub-title">改良建议</h4>
-          <ul className="advice-list">
-            {evaluatedResult.advice.map((item, idx) => (
-              <li key={idx} className="advice-item">
+            <h4 className="sub-title">改良建议</h4>
+            <ul className="advice-list">
+            {evaluatedResult.advice.map((item) => (
+              <li key={item} className="advice-item">
                 <CheckCircle2 size={16} className="advice-icon" />
                 <span>{item}</span>
               </li>
@@ -1196,9 +1202,10 @@ const ResultDrawer: React.FC = () => {
               <span>最近评估历史</span>
             </h4>
             <div className="history-list">
-              {history.map((item, idx) => (
-                <div
-                  key={idx}
+              {history.map((item) => (
+                <button
+                  type="button"
+                  key={buildHistoryItemKey(item)}
                   className={`history-item${currentResult === item ? ' active' : ''}`}
                   onClick={() => {
                     setCurrentResult(item);
@@ -1211,7 +1218,7 @@ const ResultDrawer: React.FC = () => {
                     <span className="history-status">{item.status === 'evaluated' ? item.shiLevel : '未评估'}</span>
                   </div>
                   {item.status === 'evaluated' && <span className="history-score">{item.shiScore.toFixed(0)}</span>}
-                </div>
+                </button>
               ))}
             </div>
           </div>

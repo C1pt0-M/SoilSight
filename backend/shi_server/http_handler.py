@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import threading
 from pathlib import Path
 from http.server import BaseHTTPRequestHandler
@@ -31,6 +32,32 @@ from .geo_lookup import GeoLookup
 from .knowledge_base import build_knowledge_context, decide_knowledge_usage
 from .models import PlanSession, SHIData, now_iso
 
+DEFAULT_ALLOWED_CORS_ORIGINS = frozenset({
+    "http://127.0.0.1:4173",
+    "http://localhost:4173",
+    "http://127.0.0.1:5173",
+    "http://localhost:5173",
+})
+MAX_JSON_BODY_BYTES = 1_000_000
+
+
+def resolve_allowed_cors_origin(origin: str | None) -> str | None:
+    normalized_origin = str(origin or "").strip().rstrip("/")
+    if not normalized_origin:
+        return None
+
+    raw_allowed = str(os.getenv("SOILSIGHT_ALLOWED_ORIGINS") or "").strip()
+    if raw_allowed:
+        allowed_origins = {
+            token.strip().rstrip("/")
+            for token in raw_allowed.split(",")
+            if token.strip()
+        }
+    else:
+        allowed_origins = set(DEFAULT_ALLOWED_CORS_ORIGINS)
+
+    return normalized_origin if normalized_origin in allowed_origins else None
+
 
 def parse_json_body(handler: BaseHTTPRequestHandler) -> Dict[str, Any]:
     try:
@@ -39,6 +66,8 @@ def parse_json_body(handler: BaseHTTPRequestHandler) -> Dict[str, Any]:
         content_length = 0
     if content_length <= 0:
         return {}
+    if content_length > MAX_JSON_BODY_BYTES:
+        raise ValueError("request body too large")
     raw = handler.rfile.read(content_length)
     if not raw:
         return {}
@@ -208,7 +237,10 @@ def make_handler(
 
     class Handler(BaseHTTPRequestHandler):
         def _send_cors_headers(self) -> None:
-            self.send_header("Access-Control-Allow-Origin", "*")
+            allowed_origin = resolve_allowed_cors_origin(self.headers.get("Origin"))
+            if allowed_origin:
+                self.send_header("Access-Control-Allow-Origin", allowed_origin)
+                self.send_header("Vary", "Origin")
             self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
             self.send_header("Access-Control-Allow-Headers", "Content-Type")
 
