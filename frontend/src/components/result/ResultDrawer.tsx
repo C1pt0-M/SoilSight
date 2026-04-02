@@ -1,4 +1,4 @@
-import React, { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react';
+import React, { Suspense, lazy, useEffect, useMemo, useState } from 'react';
 import {
   AlertCircle,
   AlertTriangle,
@@ -40,8 +40,8 @@ import { useResultStore } from '../../store/resultStore';
 import { getSimulationPanelState, getSimulationPlanState, isSimulationResultCurrent } from './resultDrawerSimulationState';
 import { buildHistoryItemKey } from './resultHistory';
 import { getDrawerPlanActionState } from './planSettingsState';
+import { buildReportRouteHref } from '../../pages/ReportPage/reportRoute';
 import { progressModeLabel } from '../../utils/progressMode';
-import type { SimChartHandle } from './SimChart';
 import './ResultDrawer.css';
 
 const loadSimChart = () => import('./SimChart');
@@ -252,7 +252,6 @@ const ResultDrawer: React.FC = () => {
   const generateContextPlan = useContextPlanGeneration();
 
   const [featureImportance, setFeatureImportance] = useState<FeatureImportance[]>([]);
-  const chartRef = useRef<SimChartHandle>(null);
   const evaluatedResult = status === 'evaluated' && currentResult && isEvaluatedResult(currentResult) ? currentResult : null;
   const notEvaluatedResult =
     status === 'not_evaluated' && currentResult && isNotEvaluatedResult(currentResult) ? currentResult : null;
@@ -526,6 +525,13 @@ const ResultDrawer: React.FC = () => {
   };
   const onGeneratePlan = () => {
     void generateContextPlan(evaluatedResult);
+  };
+  const openReport = () => {
+    const href = buildReportRouteHref(window.location, { autoPrint: true });
+    const popup = window.open(href, '_blank', 'noopener,noreferrer');
+    if (!popup) {
+      navigate('/report');
+    }
   };
 
   const onRunSimulation = async () => {
@@ -936,10 +942,16 @@ const ResultDrawer: React.FC = () => {
             <div className="status-chip">
               目标：{planResult.plan.goal}｜措施包：{planResult.plan.scenarioPack.name}｜灌溉：{planResult.plan.constraints.irrigation}
             </div>
-            <button className="action-btn secondary" onClick={() => goToAssistant(false)}>
-              <ArrowRight size={15} />
-              <span>前往规划工作台继续聊</span>
-            </button>
+            <div className="plan-toolbar-actions">
+              <button className="action-btn secondary" onClick={openReport}>
+                <Download size={15} />
+                <span>导出 PDF 报告</span>
+              </button>
+              <button className="action-btn secondary" onClick={() => goToAssistant(false)}>
+                <ArrowRight size={15} />
+                <span>前往规划工作台继续聊</span>
+              </button>
+            </div>
           </div>
           {simulationPlanState === 'summary_outdated' && (
             <div className="outdated-tip">
@@ -1118,16 +1130,15 @@ const ResultDrawer: React.FC = () => {
         <div className="sim-chart-toolbar">
           <Suspense fallback={<SimChartFallback />}>
             <SimChart
-              ref={chartRef}
               series={currentSimulationResult.simulation.series}
               percentileBands={bands}
               mlPredEndShi={mlRef?.predEndShi}
               stageLabels={currentSimulationResult.simulation.stageLabels}
             />
           </Suspense>
-          <button className="action-btn secondary export-chart-btn" onClick={() => chartRef.current?.exportPNG()}>
+          <button className="action-btn secondary export-chart-btn" onClick={openReport}>
             <Download size={14} />
-            <span>导出图表</span>
+            <span>导出 PDF 报告</span>
           </button>
         </div>
         {/* Before → After delta summary */}

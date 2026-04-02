@@ -5,6 +5,7 @@ import {
   LazyAboutPage,
   LazyAIAssistantPage,
   LazyDataLedgerPage,
+  LazyReportPage,
 } from './app/routeChunks';
 import './styles/tokens.css';
 
@@ -34,6 +35,7 @@ function App() {
           <Route path="/ledger" element={<LazyDataLedgerPage />} />
           <Route path="/ai" element={<LazyAIAssistantPage />} />
           <Route path="/about" element={<LazyAboutPage />} />
+          <Route path="/report" element={<LazyReportPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Suspense>

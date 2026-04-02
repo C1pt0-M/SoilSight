@@ -4,6 +4,7 @@ export const routeChunkImporters = {
   ledger: () => import('../pages/DataLedgerPage/DataLedgerPage'),
   ai: () => import('../pages/AIAssistantPage/AIAssistantPage'),
   about: () => import('../pages/AboutPage/AboutPage'),
+  report: () => import('../pages/ReportPage/ReportPage'),
 };
 
 export type RouteChunkKey = keyof typeof routeChunkImporters;
@@ -30,3 +31,4 @@ export const preloadRouteChunk = (key: RouteChunkKey): Promise<unknown> =>
 export const LazyDataLedgerPage = lazy(routeChunkImporters.ledger);
 export const LazyAIAssistantPage = lazy(routeChunkImporters.ai);
 export const LazyAboutPage = lazy(routeChunkImporters.about);
+export const LazyReportPage = lazy(routeChunkImporters.report);
