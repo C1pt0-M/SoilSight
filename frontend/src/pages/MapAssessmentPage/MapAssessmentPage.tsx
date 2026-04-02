@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import AppHeader from '../../components/common/AppHeader';
 import LayerPanel from '../../components/map/LayerPanel';
 import MapCanvas from '../../components/map/MapCanvas';
@@ -8,29 +8,41 @@ import { useMapStore } from '../../store/mapStore';
 import { usePlanStore } from '../../store/planStore';
 import { useResultStore } from '../../store/resultStore';
 import { shiService } from '../../services/shiService';
+import { buildClickRequestKey, resolveClickRequestProfileId } from '../../utils/clickRequest';
 import './MapAssessmentPage.css';
 
 const MapAssessmentPage: React.FC = () => {
-  const { clickedPoint, activeLayer, activeScoreProfileId } = useMapStore();
-  const { setStatus, setCurrentResult, setLastError, addHistory } = useResultStore();
-  const { currentPointKey, setCurrentPointKey, resetPlanFlow } = usePlanStore();
+  const clickedPoint = useMapStore((state) => state.clickedPoint);
+  const activeLayer = useMapStore((state) => state.activeLayer);
+  const activeScoreProfileId = useMapStore((state) => state.activeScoreProfileId);
+  const setStatus = useResultStore((state) => state.setStatus);
+  const setCurrentResult = useResultStore((state) => state.setCurrentResult);
+  const setLastError = useResultStore((state) => state.setLastError);
+  const addHistory = useResultStore((state) => state.addHistory);
+  const currentPointKey = usePlanStore((state) => state.currentPointKey);
+  const setCurrentPointKey = usePlanStore((state) => state.setCurrentPointKey);
+  const resetPlanFlow = usePlanStore((state) => state.resetPlanFlow);
   const abortControllerRef = useRef<AbortController | null>(null);
   const mapCanvasRef = useRef<MapCanvasHandle>(null);
+  const requestProfileId = useMemo(
+    () => resolveClickRequestProfileId(activeLayer, activeScoreProfileId),
+    [activeLayer, activeScoreProfileId],
+  );
+  const requestPointKey = useMemo(
+    () => buildClickRequestKey(clickedPoint, requestProfileId),
+    [clickedPoint, requestProfileId],
+  );
 
   const handleExportMap = useCallback(() => {
     mapCanvasRef.current?.exportMapPNG();
   }, []);
 
   useEffect(() => {
-    if (!clickedPoint) return;
+    if (!clickedPoint || !requestPointKey) return;
 
     const [lon, lat] = clickedPoint;
-    const isCropScoreLayer =
-      activeLayer === 'cotton_shi' || activeLayer === 'sugarbeet_shi' || activeLayer === 'maize_shi';
-    const requestProfileId = isCropScoreLayer ? activeScoreProfileId : 'general';
-    const pointKey = `${requestProfileId}:${lon.toFixed(5)}_${lat.toFixed(5)}`;
-    if (currentPointKey !== pointKey) {
-      setCurrentPointKey(pointKey);
+    if (currentPointKey !== requestPointKey) {
+      setCurrentPointKey(requestPointKey);
       resetPlanFlow();
     }
 
@@ -73,8 +85,8 @@ const MapAssessmentPage: React.FC = () => {
     };
   }, [
     clickedPoint,
-    activeLayer,
-    activeScoreProfileId,
+    requestPointKey,
+    requestProfileId,
     currentPointKey,
     setCurrentPointKey,
     resetPlanFlow,

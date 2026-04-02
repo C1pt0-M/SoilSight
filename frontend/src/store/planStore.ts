@@ -114,7 +114,6 @@ export const usePlanStore = create<PlanState>()(
         currentPointKey: state.currentPointKey,
         planResult: state.planResult,
         simulationResult: state.simulationResult,
-        chatDraft: state.chatDraft,
         chatMessages: state.chatMessages,
       }),
       merge: (persistedState, currentState) => {

@@ -9,6 +9,7 @@ import type { MapLayerId } from '../../store/mapStore';
 import { scoreProfileIdToLayer } from '../../store/mapStore';
 import { useResultStore } from '../../store/resultStore';
 import { shiService } from '../../services/shiService';
+import { shouldSyncViewportTarget } from '../../utils/mapViewport';
 import SearchBar from './SearchBar';
 import './MapCanvas.css';
 
@@ -36,14 +37,6 @@ const TIANDITU_STYLE: maplibregl.StyleSpecification = {
     { id: 'tdt-cva-layer', type: 'raster', source: 'tdt-cva', minzoom: 0, maxzoom: 18 },
   ],
 };
-
-interface MapMoveEvent {
-  viewState: {
-    longitude: number;
-    latitude: number;
-    zoom: number;
-  };
-}
 
 const DEFAULT_OVERLAY_COORDINATES: [[number, number], [number, number], [number, number], [number, number]] = [
   [76.93234087311833, 39.93749999617405],
@@ -94,8 +87,17 @@ const MapCanvas = forwardRef<MapCanvasHandle>((_, ref) => {
   const [overlayCoordinates, setOverlayCoordinates] = useState(DEFAULT_OVERLAY_COORDINATES);
   const [overlayVersion, setOverlayVersion] = useState<string>('initial');
   const [boundaryGeojson, setBoundaryGeojson] = useState<BoundaryGeoJSON | null>(null);
-  const { center, zoom, clickedPoint, activeLayer, setActiveLayer, setActiveScoreProfileId, setAvailableScoreProfiles, setClickedPoint, setCenter, setZoom } = useMapStore();
-  const { currentResult } = useResultStore();
+  const center = useMapStore((state) => state.center);
+  const zoom = useMapStore((state) => state.zoom);
+  const clickedPoint = useMapStore((state) => state.clickedPoint);
+  const activeLayer = useMapStore((state) => state.activeLayer);
+  const setActiveLayer = useMapStore((state) => state.setActiveLayer);
+  const setActiveScoreProfileId = useMapStore((state) => state.setActiveScoreProfileId);
+  const setAvailableScoreProfiles = useMapStore((state) => state.setAvailableScoreProfiles);
+  const setClickedPoint = useMapStore((state) => state.setClickedPoint);
+  const setCenter = useMapStore((state) => state.setCenter);
+  const setZoom = useMapStore((state) => state.setZoom);
+  const currentResult = useResultStore((state) => state.currentResult);
   const aoiMaskOpacity = 0.22;
 
   useEffect(() => {
@@ -325,17 +327,17 @@ const MapCanvas = forwardRef<MapCanvasHandle>((_, ref) => {
     setClickedPoint([lng, lat]);
   }, [setClickedPoint]);
 
-  const onMove = useCallback((evt: MapMoveEvent) => {
-    const { longitude, latitude } = evt.viewState;
-    setCenter([longitude, latitude]);
-    setZoom(evt.viewState.zoom);
-  }, [setCenter, setZoom]);
-
   // Handle flyTo when center/zoom changes from outside (e.g. reset view)
   useEffect(() => {
     if (mapRef.current) {
       const currentCenter = mapRef.current.getCenter();
-      if (Math.abs(currentCenter.lng - center[0]) > 0.0001 || Math.abs(currentCenter.lat - center[1]) > 0.0001) {
+      const currentZoom = mapRef.current.getZoom();
+      if (shouldSyncViewportTarget({
+        currentCenter: [currentCenter.lng, currentCenter.lat],
+        currentZoom,
+        targetCenter: center,
+        targetZoom: zoom,
+      })) {
         mapRef.current.flyTo({
           center: center,
           zoom: zoom,
@@ -431,7 +433,6 @@ const MapCanvas = forwardRef<MapCanvasHandle>((_, ref) => {
         canvasContextAttributes={{ preserveDrawingBuffer: true }}
         mapStyle={TIANDITU_STYLE}
         onClick={onMapClick}
-        onMove={onMove}
         style={{ width: '100%', height: '100%' }}
         mapLib={maplibregl}
       >

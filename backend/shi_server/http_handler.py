@@ -195,11 +195,14 @@ def make_handler(
         except Exception:
             province_geojson = None
 
-    def persist_sessions_locked() -> None:
+    def persist_sessions_locked(session: PlanSession | None = None) -> None:
         if session_store is None:
             return
         try:
-            session_store.save_sessions(sessions)
+            if session is not None and hasattr(session_store, "save_session"):
+                session_store.save_session(session)
+            else:
+                session_store.save_sessions(sessions)
         except Exception as exc:
             print(f"[WARN] session persistence failed: {exc}")
 
@@ -447,7 +450,7 @@ def make_handler(
                     chat_history=build_plan_chat_history(old_history, assistant_reply),
                 )
                 sessions[session_id] = session
-                persist_sessions_locked()
+                persist_sessions_locked(session)
 
             self._send_json(
                 200,
@@ -544,7 +547,7 @@ def make_handler(
 
             with sessions_lock:
                 sessions[session_id] = session
-                persist_sessions_locked()
+                persist_sessions_locked(session)
 
             self._send_json(
                 200,
@@ -635,7 +638,7 @@ def make_handler(
             session.progress_mode = progress_mode
             with sessions_lock:
                 sessions[session_id] = session
-                persist_sessions_locked()
+                persist_sessions_locked(session)
 
             self._send_json(
                 200,

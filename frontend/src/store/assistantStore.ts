@@ -215,7 +215,6 @@ export const useAssistantStore = create<AssistantState>()(
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         mode: state.mode,
-        generalDraft: state.generalDraft,
         generalMessages: state.generalMessages,
         generalConversations: state.generalConversations,
         activeGeneralConversationId: state.activeGeneralConversationId,

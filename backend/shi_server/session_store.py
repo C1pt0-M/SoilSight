@@ -4,6 +4,7 @@ import json
 from dataclasses import asdict
 from pathlib import Path
 from typing import Any, Dict
+from urllib.parse import quote
 
 from .models import PlanSession
 
@@ -13,6 +14,9 @@ class FilePlanSessionStore:
         self.path = Path(path)
 
     def load_sessions(self) -> Dict[str, PlanSession]:
+        sidecar_sessions = self._load_sidecar_sessions()
+        if sidecar_sessions is not None:
+            return sidecar_sessions
         if not self.path.exists():
             return {}
         try:
@@ -39,12 +43,71 @@ class FilePlanSessionStore:
                 for session_id, session in sorted(sessions.items())
             },
         }
-        temp_path = self.path.with_suffix(self.path.suffix + '.tmp')
-        temp_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding='utf-8')
-        temp_path.replace(self.path)
+        self._write_json_atomic(self.path, payload)
+        self._sync_sidecar_sessions(sessions)
+
+    def save_session(self, session: PlanSession) -> None:
+        sidecar_path = self._sidecar_path(session.session_id)
+        sidecar_path.parent.mkdir(parents=True, exist_ok=True)
+        self._write_json_atomic(sidecar_path, self._session_to_dict(session))
+        self._write_sidecar_manifest()
 
     def _session_to_dict(self, session: PlanSession) -> Dict[str, Any]:
         return asdict(session)
+
+    def _sidecar_dir(self) -> Path:
+        return self.path.with_suffix(self.path.suffix + '.sessions')
+
+    def _sidecar_path(self, session_id: str) -> Path:
+        encoded_session_id = quote(str(session_id), safe='-_.()')
+        return self._sidecar_dir() / f'{encoded_session_id}.json'
+
+    def _load_sidecar_sessions(self) -> Dict[str, PlanSession] | None:
+        sidecar_dir = self._sidecar_dir()
+        if not sidecar_dir.exists():
+            return None
+
+        sidecar_files = sorted(sidecar_dir.glob('*.json'))
+        if not sidecar_files:
+            return None
+
+        sessions: Dict[str, PlanSession] = {}
+        for file_path in sidecar_files:
+            try:
+                raw = json.loads(file_path.read_text(encoding='utf-8'))
+            except Exception:
+                continue
+            session = self._session_from_dict(file_path.stem, raw)
+            if session is not None:
+                sessions[session.session_id] = session
+        return sessions
+
+    def _write_sidecar_manifest(self) -> None:
+        sidecar_dir = self._sidecar_dir()
+        payload = {
+            'version': 2,
+            'storage': 'per_session_files',
+            'sessions_dir': sidecar_dir.name,
+        }
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        self._write_json_atomic(self.path, payload)
+
+    def _sync_sidecar_sessions(self, sessions: Dict[str, PlanSession]) -> None:
+        sidecar_dir = self._sidecar_dir()
+        sidecar_dir.mkdir(parents=True, exist_ok=True)
+        expected_names: set[str] = set()
+        for session_id, session in sorted(sessions.items()):
+            sidecar_path = self._sidecar_path(session_id)
+            expected_names.add(sidecar_path.name)
+            self._write_json_atomic(sidecar_path, self._session_to_dict(session))
+        for file_path in sidecar_dir.glob('*.json'):
+            if file_path.name not in expected_names:
+                file_path.unlink()
+
+    def _write_json_atomic(self, path: Path, payload: Dict[str, Any]) -> None:
+        temp_path = path.with_suffix(path.suffix + '.tmp')
+        temp_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding='utf-8')
+        temp_path.replace(path)
 
     def _session_from_dict(self, session_id: str, raw: Any) -> PlanSession | None:
         if not isinstance(raw, dict):

@@ -90,9 +90,9 @@ def _sample_county(
     valid_mask: np.ndarray,
     *,
     score_profile_id: str,
+    coordinate_cache: tuple[np.ndarray, np.ndarray, np.ndarray] | None = None,
 ) -> dict | None:
     """Sample SHI pixels inside a county and return statistics."""
-    from .evaluation import lonlat_to_rowcol, rowcol_to_lonlat
 
     r_min, r_max, c_min, c_max = _bbox_to_rowcol_range(feat, data)
     if r_min > r_max or c_min > c_max:
@@ -109,12 +109,14 @@ def _sample_county(
     salinity_values: list[float] = []
     terrain_values: list[float] = []
     point_in_poly = _point_in_multipolygon
+    row_lats, row_lon_scales, col_xs = coordinate_cache or _get_coordinate_cache(data)
     for r in range(r_min, r_max + 1, SAMPLE_STEP):
         for c in range(c_min, c_max + 1, SAMPLE_STEP):
             if not valid_mask[r, c]:
                 continue
             score_val = float(data.score[r, c])
-            lon, lat = rowcol_to_lonlat(r, c, data)
+            lat = float(row_lats[r])
+            lon = float(col_xs[c] * row_lon_scales[r])
             if point_in_poly(lon, lat, feat):
                 scores.append(score_val)
                 classes.append(int(data.cls[r, c]))
@@ -172,6 +174,10 @@ def _sample_county(
 
 
 _cache_by_profile: dict[str, list[dict]] = {}
+_coordinate_cache_by_grid: dict[
+    tuple[float, float, float, float, int, int, float],
+    tuple[np.ndarray, np.ndarray, np.ndarray],
+] = {}
 
 
 def _profile_cache_key(data: SHIData) -> str:
@@ -181,6 +187,37 @@ def _profile_cache_key(data: SHIData) -> str:
 def _cache_path_for_data(data: SHIData) -> Path:
     profile_id = _profile_cache_key(data)
     return Path("data/staging") / f"shi_{data.region_id}_{profile_id}_county_stats_{data.baseline_start_year}_{data.baseline_end_year}.json"
+
+
+def _get_coordinate_cache(data: SHIData) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    grid = data.grid
+    cache_key = (
+        float(grid.x0),
+        float(grid.y0),
+        float(grid.sx),
+        float(grid.sy),
+        int(grid.width),
+        int(grid.height),
+        float(grid.radius_m),
+    )
+    cached = _coordinate_cache_by_grid.get(cache_key)
+    if cached is not None:
+        return cached
+
+    row_indices = np.arange(grid.height, dtype=np.float64)
+    col_indices = np.arange(grid.width, dtype=np.float64)
+    y_values = grid.y0 - (row_indices + 0.5) * grid.sy
+    lat_radians = y_values / grid.radius_m
+    row_lats = np.rad2deg(lat_radians)
+    cos_lat = np.cos(lat_radians)
+    row_lon_scales = np.zeros_like(cos_lat)
+    valid_rows = np.abs(cos_lat) >= 1e-12
+    row_lon_scales[valid_rows] = np.rad2deg(1.0 / (grid.radius_m * cos_lat[valid_rows]))
+    col_xs = grid.x0 + (col_indices + 0.5) * grid.sx
+
+    cached = (row_lats, row_lon_scales, col_xs)
+    _coordinate_cache_by_grid[cache_key] = cached
+    return cached
 
 
 def compute_county_stats(data: SHIData, geo: GeoLookup) -> list[dict]:
@@ -214,6 +251,7 @@ def compute_county_stats(data: SHIData, geo: GeoLookup) -> list[dict]:
         & np.isfinite(data.score)
         & (data.score != data.nodata)
     )
+    coordinate_cache = _get_coordinate_cache(data)
     results: list[dict] = []
     all_features: List[Tuple[str, AdminFeature]] = []
     for feat in geo.prefectures:
@@ -224,7 +262,13 @@ def compute_county_stats(data: SHIData, geo: GeoLookup) -> list[dict]:
     for admin_type, feat in all_features:
         if not hasattr(feat, "bbox") or feat.bbox is None:
             continue
-        stats = _sample_county(feat, data, valid_mask, score_profile_id=profile_key)
+        stats = _sample_county(
+            feat,
+            data,
+            valid_mask,
+            score_profile_id=profile_key,
+            coordinate_cache=coordinate_cache,
+        )
         if stats is not None:
             stats["type"] = admin_type
             results.append(stats)
