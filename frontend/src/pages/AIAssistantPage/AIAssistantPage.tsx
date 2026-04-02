@@ -31,6 +31,7 @@ import { useAssistantStore } from '../../store/assistantStore';
 import { useMapStore } from '../../store/mapStore';
 import { usePlanStore } from '../../store/planStore';
 import { useResultStore } from '../../store/resultStore';
+import { areContextSuggestionChipsDisabled } from './contextualAssistantState';
 import { progressModeLabel } from '../../utils/progressMode';
 import './AIAssistantPage.css';
 
@@ -222,6 +223,14 @@ const AIAssistantPage: React.FC = () => {
   const activeGeneralConversation = useMemo(
     () => generalConversations.find((conversation) => conversation.id === activeGeneralConversationId) ?? null,
     [activeGeneralConversationId, generalConversations]
+  );
+  const contextSuggestionChipsDisabled = useMemo(
+    () => areContextSuggestionChipsDisabled({
+      chatSending,
+      canGenerateContextPlan,
+      canChatWithContext,
+    }),
+    [canChatWithContext, canGenerateContextPlan, chatSending],
   );
   const modeSuggestions =
     mode === 'contextual'
@@ -764,7 +773,7 @@ const AIAssistantPage: React.FC = () => {
                         key={item}
                         className="suggestion-chip"
                         onClick={() => handleSuggestionClick(item)}
-                        disabled={chatSending || (mode === 'contextual' && !canGenerateContextPlan)}
+                        disabled={mode === 'contextual' ? contextSuggestionChipsDisabled : chatSending}
                       >
                         {item}
                       </button>

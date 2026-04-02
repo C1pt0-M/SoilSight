@@ -181,11 +181,22 @@ _coordinate_cache_by_grid: dict[
 
 
 def _profile_cache_key(data: SHIData) -> str:
-    return str(getattr(data, "score_profile_id", "cotton") or "cotton").strip().lower() or "cotton"
+    region_id = str(getattr(data, "region_id", "unknown") or "unknown").strip().lower() or "unknown"
+    score_profile_id = str(getattr(data, "score_profile_id", "cotton") or "cotton").strip().lower() or "cotton"
+    baseline_start_year = int(getattr(data, "baseline_start_year", 0) or 0)
+    baseline_end_year = int(getattr(data, "baseline_end_year", 0) or 0)
+    time_window = ",".join(str(int(month)) for month in getattr(data, "time_window_months", ()) or ())
+    return "|".join([
+        region_id,
+        score_profile_id,
+        str(baseline_start_year),
+        str(baseline_end_year),
+        time_window,
+    ])
 
 
 def _cache_path_for_data(data: SHIData) -> Path:
-    profile_id = _profile_cache_key(data)
+    profile_id = str(getattr(data, "score_profile_id", "cotton") or "cotton").strip().lower() or "cotton"
     return Path("data/staging") / f"shi_{data.region_id}_{profile_id}_county_stats_{data.baseline_start_year}_{data.baseline_end_year}.json"
 
 
@@ -223,6 +234,7 @@ def _get_coordinate_cache(data: SHIData) -> tuple[np.ndarray, np.ndarray, np.nda
 def compute_county_stats(data: SHIData, geo: GeoLookup) -> list[dict]:
     """Compute and cache county-level SHI statistics."""
     profile_key = _profile_cache_key(data)
+    profile_id = str(getattr(data, "score_profile_id", "cotton") or "cotton").strip().lower() or "cotton"
     if profile_key in _cache_by_profile:
         return _cache_by_profile[profile_key]
 
@@ -233,7 +245,7 @@ def compute_county_stats(data: SHIData, geo: GeoLookup) -> list[dict]:
             meta = raw.get("meta", {}) if isinstance(raw, dict) else {}
             if (
                 meta.get("region_id") == data.region_id
-                and meta.get("score_profile_id") == profile_key
+                and meta.get("score_profile_id") == profile_id
                 and meta.get("baseline_years") == [data.baseline_start_year, data.baseline_end_year]
                 and meta.get("time_window") == [int(m) for m in data.time_window_months]
                 and meta.get("sample_step") == SAMPLE_STEP
@@ -266,7 +278,7 @@ def compute_county_stats(data: SHIData, geo: GeoLookup) -> list[dict]:
             feat,
             data,
             valid_mask,
-            score_profile_id=profile_key,
+            score_profile_id=profile_id,
             coordinate_cache=coordinate_cache,
         )
         if stats is not None:
@@ -281,7 +293,7 @@ def compute_county_stats(data: SHIData, geo: GeoLookup) -> list[dict]:
         payload = {
             "meta": {
                 "region_id": data.region_id,
-                "score_profile_id": profile_key,
+                "score_profile_id": profile_id,
                 "baseline_years": [data.baseline_start_year, data.baseline_end_year],
                 "time_window": [int(m) for m in data.time_window_months],
                 "sample_step": SAMPLE_STEP,
