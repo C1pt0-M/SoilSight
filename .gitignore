@@ -59,8 +59,10 @@ cotton.json
 sugarbeet.json
 
 # --- Internal / dev docs not published ---
+readme.txt
 AGENTS.md
 Git规范.md
+competition_docs/
 docs/
 data/10003274/
 data/patches/
