@@ -13,8 +13,25 @@ import {
   X,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import type { ClickResult, ClickResultEvaluated, ClickResultNotEvaluated, CropProfileInfo, CropSupportInfo, FeatureImportance, LocationInfo, ParameterSource, SensitivityItem } from '../../models/shi';
+import {
+  SCENARIO_PACK_OPTIONS,
+  type ClickResult,
+  type ClickResultEvaluated,
+  type ClickResultNotEvaluated,
+  type CropProfileInfo,
+  type CropSupportInfo,
+  type FeatureImportance,
+  type IrrigationConstraint,
+  type LocationInfo,
+  type ParameterSource,
+  type PlanObjective,
+  type ProgressMode,
+  type ScenarioPackId,
+  type SensitivityItem,
+} from '../../models/shi';
+import PlanSettingsCard from './PlanSettingsCard';
 import { shiService } from '../../services/shiService';
+import { useContextPlanGeneration } from '../../hooks/useContextPlanGeneration';
 import { useAssistantStore } from '../../store/assistantStore';
 import { useMapStore } from '../../store/mapStore';
 import type { MapLayerId } from '../../store/mapStore';
@@ -22,6 +39,7 @@ import { usePlanStore } from '../../store/planStore';
 import { useResultStore } from '../../store/resultStore';
 import { getSimulationPanelState, getSimulationPlanState, isSimulationResultCurrent } from './resultDrawerSimulationState';
 import { buildHistoryItemKey } from './resultHistory';
+import { getDrawerPlanActionState } from './planSettingsState';
 import { progressModeLabel } from '../../utils/progressMode';
 import type { SimChartHandle } from './SimChart';
 import './ResultDrawer.css';
@@ -217,6 +235,10 @@ const ResultDrawer: React.FC = () => {
     selectedObjective,
     selectedIrrigation,
     selectedProgressMode,
+    setSelectedScenarioPack,
+    setSelectedObjective,
+    setSelectedIrrigation,
+    setSelectedProgressMode,
     planStatus,
     simulationStatus,
     planError,
@@ -227,6 +249,7 @@ const ResultDrawer: React.FC = () => {
     setSimulationError,
     setSimulationResult,
   } = usePlanStore();
+  const generateContextPlan = useContextPlanGeneration();
 
   const [featureImportance, setFeatureImportance] = useState<FeatureImportance[]>([]);
   const chartRef = useRef<SimChartHandle>(null);
@@ -478,6 +501,19 @@ const ResultDrawer: React.FC = () => {
       }),
     [simulationPlanState, hasCurrentSimulation],
   );
+  const canGenerateContextPlan = Boolean(evaluatedResult);
+  const drawerPlanActionState = useMemo(
+    () => getDrawerPlanActionState({
+      canGenerateContextPlan,
+      hasPlanResult: Boolean(planResult),
+      planStatus,
+    }),
+    [canGenerateContextPlan, planResult, planStatus],
+  );
+  const selectedScenarioPackName = useMemo(
+    () => SCENARIO_PACK_OPTIONS.find((item) => item.id === selectedScenarioPack)?.name ?? selectedScenarioPack,
+    [selectedScenarioPack],
+  );
 
   const onClose = () => {
     setStatus('idle');
@@ -487,6 +523,9 @@ const ResultDrawer: React.FC = () => {
   const goToAssistant = (autoLaunch = false) => {
     openContextualAssistant({ autoLaunch });
     navigate('/ai');
+  };
+  const onGeneratePlan = () => {
+    void generateContextPlan(evaluatedResult);
   };
 
   const onRunSimulation = async () => {
@@ -860,127 +899,146 @@ const ResultDrawer: React.FC = () => {
     if (!evaluatedResult) {
       return <div className="empty-inline">当前点位不在当前特色作物评分适用范围，暂不能生成规划。</div>;
     }
-    if (planStatus === 'loading') {
-      return (
-        <div className="loading-state compact">
-          <div className="spinner"></div>
-          <p>规划生成中...</p>
-        </div>
-      );
-    }
-    if (planStatus === 'error') {
-      return (
-        <div className="status-card warning">
-          <AlertCircle size={18} />
-          <div className="status-text">
-            <h3>生成失败</h3>
-            <p>{planError || '请稍后再试'}</p>
+    const content = (() => {
+      if (planStatus === 'loading') {
+        return (
+          <div className="loading-state compact">
+            <div className="spinner"></div>
+            <p>规划生成中...</p>
           </div>
-          <button className="action-btn primary" onClick={() => goToAssistant(true)}>
-            <Sparkles size={15} />
-            <span>前往规划工作台重试</span>
-          </button>
-        </div>
-      );
-    }
-    if (!planResult) {
+        );
+      }
+      if (planStatus === 'error') {
+        return (
+          <div className="status-card warning">
+            <AlertCircle size={18} />
+            <div className="status-text">
+              <h3>生成失败</h3>
+              <p>{planError || '请稍后再试'}</p>
+            </div>
+            <button className="action-btn primary" onClick={onGeneratePlan}>
+              <Sparkles size={15} />
+              <span>重试生成规划</span>
+            </button>
+          </div>
+        );
+      }
+      if (!planResult) {
+        return (
+          <div className="empty-inline">
+            <p>设置完成后，可直接在这里生成地块规划；生成后再前往规划工作台继续追问。</p>
+          </div>
+        );
+      }
       return (
-        <div className="empty-inline">
-          <p>如需生成地块规划或继续追问，请前往规划工作台，系统会自动带入当前地块信息。</p>
-          <button className="action-btn primary" onClick={() => goToAssistant(true)}>
-            <Sparkles size={15} />
-            <span>前往规划工作台生成规划</span>
-          </button>
-        </div>
+        <>
+          <div className="plan-toolbar">
+            <div className="status-chip">
+              目标：{planResult.plan.goal}｜措施包：{planResult.plan.scenarioPack.name}｜灌溉：{planResult.plan.constraints.irrigation}
+            </div>
+            <button className="action-btn secondary" onClick={() => goToAssistant(false)}>
+              <ArrowRight size={15} />
+              <span>前往规划工作台继续聊</span>
+            </button>
+          </div>
+          {simulationPlanState === 'summary_outdated' && (
+            <div className="outdated-tip">
+              当前摘要沿用旧的措施包或时长设置；下方模拟会按当前选择重新运行。
+            </div>
+          )}
+          {simulationPlanState === 'plan_regeneration_required' && (
+            <div className="outdated-tip">
+              已切换目标或灌溉约束，请先在本页重新生成规划摘要与情景基线。
+            </div>
+          )}
+          {planResult.snapshot.risk && (
+            <div className="status-chip risk-inline">
+              风险：干旱 {typeof planResult.snapshot.risk.droughtRisk === 'number' ? `${(planResult.snapshot.risk.droughtRisk * 100).toFixed(0)}%` : '—'}
+              ｜热胁迫 {typeof planResult.snapshot.risk.heatRisk === 'number' ? `${(planResult.snapshot.risk.heatRisk * 100).toFixed(0)}%` : '—'}
+              ｜等级 {planResult.snapshot.risk.riskLevel || '—'}
+            </div>
+          )}
+          <p className="plan-summary">{planResult.plan.summary}</p>
+          <div className="stage-list">
+            {planResult.plan.stages.map((stage) => (
+              <div className="stage-card" key={stage.stageId}>
+                <h5>{stage.title}</h5>
+                <ul>
+                  {stage.actions.map((action) => (
+                    <li key={action}>{action}</li>
+                  ))}
+                </ul>
+                {stage.milestones && stage.milestones.length > 0 && (
+                  <div className="stage-subsection">
+                    <strong>阶段里程碑</strong>
+                    <ul>
+                      {stage.milestones.map((item) => (
+                        <li key={item}>{item}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {stage.exitConditions && stage.exitConditions.length > 0 && (
+                  <div className="stage-subsection">
+                    <strong>进入下一阶段的条件</strong>
+                    <ul>
+                      {stage.exitConditions.map((item) => (
+                        <li key={item}>{item}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {stage.fallbackActions && stage.fallbackActions.length > 0 && (
+                  <div className="stage-subsection">
+                    <strong>未达成时怎么升级</strong>
+                    <ul>
+                      {stage.fallbackActions.map((item) => (
+                        <li key={item}>{item}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+          <div className="trace-list">
+            <h5>触发依据</h5>
+            {planResult.plan.ruleTraces.map((trace) => (
+              <div className="trace-item" key={trace.ruleId}>
+                <strong>{trace.ruleId}</strong>
+                <span>{trace.explanation}</span>
+              </div>
+            ))}
+          </div>
+          <div className="status-card info compact">
+            <Sparkles size={16} />
+            <div className="status-text">
+              <h3>继续完善规划</h3>
+              <p>如需继续追问、细化执行步骤，可前往规划工作台；规划设置已前移到本页维护。</p>
+            </div>
+          </div>
+        </>
       );
-    }
+    })();
     return (
       <div className="plan-content">
-        <div className="plan-toolbar">
-          <div className="status-chip">
-            目标：{planResult.plan.goal}｜措施包：{planResult.plan.scenarioPack.name}｜灌溉：{planResult.plan.constraints.irrigation}
-          </div>
-          <button className="action-btn secondary" onClick={() => goToAssistant(false)}>
-            <ArrowRight size={15} />
-            <span>前往规划工作台继续聊</span>
-          </button>
-        </div>
-        {simulationPlanState === 'summary_outdated' && (
-          <div className="outdated-tip">
-            当前摘要沿用旧的措施包或时长设置；下方模拟会按当前选择重新运行。
-          </div>
-        )}
-        {simulationPlanState === 'plan_regeneration_required' && (
-          <div className="outdated-tip">
-            已切换目标或灌溉约束，需前往规划工作台重新生成规划摘要与情景基线。
-          </div>
-        )}
-        {planResult.snapshot.risk && (
-          <div className="status-chip risk-inline">
-            风险：干旱 {typeof planResult.snapshot.risk.droughtRisk === 'number' ? `${(planResult.snapshot.risk.droughtRisk * 100).toFixed(0)}%` : '—'}
-            ｜热胁迫 {typeof planResult.snapshot.risk.heatRisk === 'number' ? `${(planResult.snapshot.risk.heatRisk * 100).toFixed(0)}%` : '—'}
-            ｜等级 {planResult.snapshot.risk.riskLevel || '—'}
-          </div>
-        )}
-        <p className="plan-summary">{planResult.plan.summary}</p>
-        <div className="stage-list">
-          {planResult.plan.stages.map((stage) => (
-            <div className="stage-card" key={stage.stageId}>
-              <h5>{stage.title}</h5>
-              <ul>
-                {stage.actions.map((action) => (
-                  <li key={action}>{action}</li>
-                ))}
-              </ul>
-              {stage.milestones && stage.milestones.length > 0 && (
-                <div className="stage-subsection">
-                  <strong>阶段里程碑</strong>
-                  <ul>
-                    {stage.milestones.map((item) => (
-                      <li key={item}>{item}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-              {stage.exitConditions && stage.exitConditions.length > 0 && (
-                <div className="stage-subsection">
-                  <strong>进入下一阶段的条件</strong>
-                  <ul>
-                    {stage.exitConditions.map((item) => (
-                      <li key={item}>{item}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-              {stage.fallbackActions && stage.fallbackActions.length > 0 && (
-                <div className="stage-subsection">
-                  <strong>未达成时怎么升级</strong>
-                  <ul>
-                    {stage.fallbackActions.map((item) => (
-                      <li key={item}>{item}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-        <div className="trace-list">
-          <h5>触发依据</h5>
-          {planResult.plan.ruleTraces.map((trace) => (
-            <div className="trace-item" key={trace.ruleId}>
-              <strong>{trace.ruleId}</strong>
-              <span>{trace.explanation}</span>
-            </div>
-          ))}
-        </div>
-        <div className="status-card info compact">
-          <Sparkles size={16} />
-          <div className="status-text">
-            <h3>继续完善规划</h3>
-            <p>如需继续追问、细化执行步骤或调整规划设置，请前往规划工作台。</p>
-          </div>
-        </div>
+        <PlanSettingsCard
+          selectedScenarioPack={selectedScenarioPack}
+          selectedObjective={selectedObjective as PlanObjective}
+          selectedIrrigation={selectedIrrigation as IrrigationConstraint}
+          selectedProgressMode={selectedProgressMode as ProgressMode}
+          setSelectedScenarioPack={setSelectedScenarioPack as (value: ScenarioPackId) => void}
+          setSelectedObjective={setSelectedObjective as (value: PlanObjective) => void}
+          setSelectedIrrigation={setSelectedIrrigation as (value: IrrigationConstraint) => void}
+          setSelectedProgressMode={setSelectedProgressMode as (value: ProgressMode) => void}
+          primaryLabel={drawerPlanActionState.label}
+          primaryDisabled={drawerPlanActionState.disabled}
+          onGenerate={onGeneratePlan}
+        />
+        <p className="plan-settings-current">
+          当前设置：措施包 {selectedScenarioPackName}｜目标 {selectedObjective}｜灌溉 {selectedIrrigation}｜节奏 {progressModeLabel(selectedProgressMode)}
+        </p>
+        {content}
       </div>
     );
   };

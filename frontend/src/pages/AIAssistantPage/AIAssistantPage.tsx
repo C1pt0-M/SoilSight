@@ -17,18 +17,14 @@ import { SCENARIO_PACK_OPTIONS } from '../../models/shi';
 import type {
   ClickResult,
   ClickResultEvaluated,
-  IrrigationConstraint,
   KnowledgeHit,
-  PlanObjective,
   PlanSnapshot,
   PlanTaskType,
-  ProgressMode,
-  ScenarioPackId,
   SHIComponents,
 } from '../../models/shi';
 import { shiService } from '../../services/shiService';
+import { useContextPlanGeneration } from '../../hooks/useContextPlanGeneration';
 import { useAssistantStore } from '../../store/assistantStore';
-import { useMapStore } from '../../store/mapStore';
 import { usePlanStore } from '../../store/planStore';
 import { useResultStore } from '../../store/resultStore';
 import { areContextSuggestionChipsDisabled } from './contextualAssistantState';
@@ -147,7 +143,6 @@ const renderKnowledgeHits = (knowledgeHits?: KnowledgeHit[]) => {
 const AIAssistantPage: React.FC = () => {
   const navigate = useNavigate();
   const currentResult = useResultStore((state) => state.currentResult);
-  const activeScoreProfileId = useMapStore((state) => state.activeScoreProfileId);
   const evaluatedResult = isEvaluatedResult(currentResult) ? currentResult : null;
   const {
     mode,
@@ -181,22 +176,12 @@ const AIAssistantPage: React.FC = () => {
     planResult,
     chatDraft,
     chatMessages,
-    setActiveTab,
-    setSelectedScenarioPack,
-    setSelectedObjective,
     setSelectedTaskType,
-    setSelectedIrrigation,
-    setSelectedProgressMode,
-    setPlanStatus,
-    setPlanError,
-    setPlanResult,
-    setSimulationStatus,
-    setSimulationError,
-    setSimulationResult,
     setChatDraft,
     setChatMessages,
   } = usePlanStore();
   const [chatSending, setChatSending] = useState(false);
+  const generateContextPlan = useContextPlanGeneration();
 
   const contextSnapshot = useMemo<PlanSnapshot | null>(() => {
     if (planResult?.snapshot) return planResult.snapshot;
@@ -223,6 +208,10 @@ const AIAssistantPage: React.FC = () => {
   const activeGeneralConversation = useMemo(
     () => generalConversations.find((conversation) => conversation.id === activeGeneralConversationId) ?? null,
     [activeGeneralConversationId, generalConversations]
+  );
+  const selectedScenarioPackName = useMemo(
+    () => SCENARIO_PACK_OPTIONS.find((item) => item.id === selectedScenarioPack)?.name ?? selectedScenarioPack,
+    [selectedScenarioPack],
   );
   const contextSuggestionChipsDisabled = useMemo(
     () => areContextSuggestionChipsDisabled({
@@ -255,72 +244,18 @@ const AIAssistantPage: React.FC = () => {
     }
   }, [chatMessages.length, planResult, setChatMessages]);
 
-  const handleGenerateContextPlan = useCallback(async (taskTypeOverride?: PlanTaskType) => {
-    if (!evaluatedResult) return;
-    const nextTaskType = taskTypeOverride ?? selectedTaskType;
-    if (taskTypeOverride && taskTypeOverride !== selectedTaskType) {
-      setSelectedTaskType(taskTypeOverride);
-    }
-    setActiveTab('plan');
-    setPlanStatus('loading');
-    setPlanError(null);
-    setSimulationStatus('idle');
-    setSimulationError(null);
-    setSimulationResult(null);
-    try {
-      const result = await shiService.generatePlan({
-        lon: evaluatedResult.lon,
-        lat: evaluatedResult.lat,
-        objective: selectedObjective,
-        irrigation: selectedIrrigation,
-        scenarioPack: selectedScenarioPack,
-        progressMode: selectedProgressMode,
-        taskType: nextTaskType,
-        profileId: activeScoreProfileId,
-      });
-      setPlanResult(result);
-      setPlanStatus('ready');
-      setChatMessages([
-        {
-          role: 'assistant',
-          content: result.assistantReply,
-          knowledgeHits: result.assistantKnowledgeHits,
-        },
-      ]);
-    } catch (error: unknown) {
-      setPlanStatus('error');
-      setPlanError(formatErrorMessage(error, '生成方案失败'));
-    }
-  }, [
-    evaluatedResult,
-    selectedObjective,
-    selectedIrrigation,
-    selectedScenarioPack,
-    selectedTaskType,
-    selectedProgressMode,
-    activeScoreProfileId,
-    setActiveTab,
-    setPlanError,
-    setPlanResult,
-    setPlanStatus,
-    setSelectedTaskType,
-    setSimulationError,
-    setSimulationResult,
-    setSimulationStatus,
-    setChatMessages,
-  ]);
-
   useEffect(() => {
     if (mode !== 'contextual' || !autoLaunchContextPlan) return;
     consumeAutoLaunchContextPlan();
     if (canGenerateContextPlan && !planResult && planStatus !== 'loading') {
-      void handleGenerateContextPlan();
+      void generateContextPlan(evaluatedResult);
     }
   }, [
     autoLaunchContextPlan,
     canGenerateContextPlan,
     consumeAutoLaunchContextPlan,
-    handleGenerateContextPlan,
+    evaluatedResult,
+    generateContextPlan,
     mode,
     planResult,
     planStatus,
@@ -403,11 +338,11 @@ const AIAssistantPage: React.FC = () => {
       if (mode === 'contextual') {
         const matchedTask = TASK_ENTRY_OPTIONS.find((item) => item.title === text);
         if (matchedTask) {
-          void handleGenerateContextPlan(matchedTask.id);
+          void generateContextPlan(evaluatedResult, matchedTask.id);
           return;
         }
         if (!canChatWithContext) {
-          void handleGenerateContextPlan(selectedTaskType);
+          void generateContextPlan(evaluatedResult, selectedTaskType);
           return;
         }
         void handleSendContextMessage(text);
@@ -415,7 +350,7 @@ const AIAssistantPage: React.FC = () => {
       }
       void handleSendGeneralMessage(text);
     },
-    [canChatWithContext, handleGenerateContextPlan, handleSendContextMessage, handleSendGeneralMessage, mode, selectedTaskType]
+    [canChatWithContext, evaluatedResult, generateContextPlan, handleSendContextMessage, handleSendGeneralMessage, mode, selectedTaskType]
   );
 
   const formatConversationTime = useCallback((value: string) => {
@@ -520,6 +455,13 @@ const AIAssistantPage: React.FC = () => {
                       <Sparkles size={15} />
                       <span>任务入口</span>
                     </div>
+                    <div className="context-risk-row">
+                      <span>措施包 {selectedScenarioPackName}</span>
+                      <span>目标 {selectedObjective}</span>
+                      <span>灌溉 {selectedIrrigation}</span>
+                      <span>节奏 {progressModeLabel(selectedProgressMode)}</span>
+                    </div>
+                    <p className="summary-empty">规划设置已经前移到主页面的规划生成面板，如需调整，请先返回主页面。</p>
                     <div className="task-entry-list">
                       {TASK_ENTRY_OPTIONS.map((item) => {
                         const active = selectedTaskType === item.id;
@@ -536,80 +478,11 @@ const AIAssistantPage: React.FC = () => {
                     </div>
                     <button
                       className="assistant-btn primary"
-                      onClick={() => void handleGenerateContextPlan(selectedTaskType)}
+                      onClick={() => void generateContextPlan(evaluatedResult, selectedTaskType)}
                       disabled={!canGenerateContextPlan || planStatus === "loading"}>
                       <Sparkles size={15} />
                       <span>{planStatus === "loading" ? "生成中..." : (TASK_ENTRY_OPTIONS.find((item) => item.id === selectedTaskType)?.title ?? "我这块地先做什么")}</span>
                     </button>
-                  </div>
-
-                  <div className="assistant-panel control-panel">
-                    <div className="panel-heading">
-                      <Sparkles size={15} />
-                      <span>规划设置</span>
-                    </div>
-                    <div className="context-controls">
-                      <label>
-                        <span>措施包</span>
-                        <select
-                          value={selectedScenarioPack}
-                          onChange={(event) => setSelectedScenarioPack(event.target.value as ScenarioPackId)}
-                        >
-                          {SCENARIO_PACK_OPTIONS.map((item) => (
-                            <option key={item.id} value={item.id}>
-                              {item.name}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-                      <label>
-                        <span>目标偏好</span>
-                        <select
-                          value={selectedObjective}
-                          onChange={(event) => setSelectedObjective(event.target.value as PlanObjective)}
-                        >
-                          <option value="稳产优先">稳产优先</option>
-                          <option value="节水优先">节水优先</option>
-                          <option value="改土优先">改土优先</option>
-                        </select>
-                      </label>
-                      <label>
-                        <span>灌溉条件</span>
-                        <select
-                          value={selectedIrrigation}
-                          onChange={(event) => setSelectedIrrigation(event.target.value as IrrigationConstraint)}
-                        >
-                          <option value="充足">充足</option>
-                          <option value="有限">有限</option>
-                          <option value="无">无</option>
-                        </select>
-                      </label>
-                      <label>
-                        <span>推进节奏</span>
-                        <select
-                          value={selectedProgressMode}
-                          onChange={(event) => setSelectedProgressMode(event.target.value as ProgressMode)}
-                        >
-                          <option value="aggressive">积极推进</option>
-                          <option value="stable">稳健推进</option>
-                          <option value="conservative">保守推进</option>
-                        </select>
-                      </label>
-                    </div>
-                    <div className="context-actions">
-                      <button
-                        className="assistant-btn primary"
-                        onClick={() => void handleGenerateContextPlan()}
-                        disabled={!canGenerateContextPlan || planStatus === 'loading'}
-                      >
-                        <Sparkles size={15} />
-                        <span>{planStatus === 'loading' ? '生成中...' : planResult ? '重新生成规划' : '生成当前地块规划'}</span>
-                      </button>
-                      <button className="assistant-btn ghost" onClick={() => navigate('/')}>
-                        <ArrowRight size={15} />
-                        <span>返回地图</span>
-                      </button>
-                    </div>
                   </div>
 
                   <div className="assistant-panel summary-panel">
@@ -750,7 +623,7 @@ const AIAssistantPage: React.FC = () => {
                         <p>点击下方按钮后，系统会先读取当前地块的当前作物评分、风险和主分短板，再进入多轮对话。</p>
                         <button
                           className="assistant-btn primary"
-                          onClick={() => void handleGenerateContextPlan()}
+                          onClick={() => void generateContextPlan(evaluatedResult)}
                           disabled={!canGenerateContextPlan}
                         >
                           <Sparkles size={15} />

@@ -211,6 +211,24 @@ export type PlanTaskType = 'priority_actions' | 'stage_schedule' | 'risk_explain
 export type IrrigationConstraint = '充足' | '有限' | '无';
 export type ProgressMode = 'aggressive' | 'stable' | 'conservative';
 
+export const PLAN_OBJECTIVE_OPTIONS: Array<{ value: PlanObjective; label: string }> = [
+  { value: '稳产优先', label: '稳产优先' },
+  { value: '节水优先', label: '节水优先' },
+  { value: '改土优先', label: '改土优先' },
+];
+
+export const IRRIGATION_CONSTRAINT_OPTIONS: Array<{ value: IrrigationConstraint; label: string }> = [
+  { value: '充足', label: '充足' },
+  { value: '有限', label: '有限' },
+  { value: '无', label: '无' },
+];
+
+export const PROGRESS_MODE_OPTIONS: Array<{ value: ProgressMode; label: string }> = [
+  { value: 'aggressive', label: '积极推进' },
+  { value: 'stable', label: '稳健推进' },
+  { value: 'conservative', label: '保守推进' },
+];
+
 export interface RuleTrace {
   ruleId: string;
   title: string;
