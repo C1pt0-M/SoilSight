@@ -189,6 +189,8 @@ frontend/public/overlays/*
 !frontend/public/overlays/heat_risk_overlay.png
 !frontend/public/overlays/soil_norm_overlay.png
 !frontend/public/overlays/water_norm_overlay.png
+!frontend/src/build/
+!frontend/src/build/manualChunks.ts
 
 # --- Keep only runtime scripts ---
 scripts/*
