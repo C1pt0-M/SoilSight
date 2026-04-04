@@ -1,0 +1,23 @@
+[Unit]
+Description=SoilSight Backend API
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/opt/soilsight
+EnvironmentFile=-/opt/soilsight/backend/.env
+ExecStart=/opt/soilsight/.venv/bin/python /opt/soilsight/backend/soilsight_server.py --host 127.0.0.1 --port 8010 --region_id xinjiang
+Restart=on-failure
+RestartSec=3
+StandardOutput=journal
+StandardError=journal
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ReadWritePaths=/opt/soilsight/data /opt/soilsight/tmp
+
+[Install]
+WantedBy=multi-user.target
