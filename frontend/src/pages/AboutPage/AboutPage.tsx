@@ -13,7 +13,7 @@ const AboutPage: React.FC = () => {
           <section className="organic-card about-section">
             <h2>系统愿景</h2>
             <p>
-              土瞰 SoilSight 当前主线聚焦新疆特色作物系统。
+              天山土智当前主线聚焦新疆特色作物系统。
               系统整合 MODIS 植被指数、SoilGrids 土壤理化数据、ERA5-Land 气候水文数据、
               SRTM 地形数据与耕地/作物分布图层，构建面向棉花、甜菜等特色作物场景的 profile-based 评分与决策支持流程，
               用于识别特色作物系统中的水盐约束、土壤本底短板与管理风险。

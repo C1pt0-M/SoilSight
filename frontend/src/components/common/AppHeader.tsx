@@ -11,7 +11,7 @@ const AppHeader: React.FC = () => {
       <div className="header-left">
         <NavLink to="/" className="logo">
           <Layout className="logo-icon" />
-          <span className="logo-text">土瞰 SoilSight</span>
+          <span className="logo-text">天山土智</span>
         </NavLink>
         <div className="scene-tag">新疆特色作物土壤质量评估与规划建议</div>
         <div className="data-tag">2010–2025 生长季 · 500m</div>

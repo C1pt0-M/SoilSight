@@ -9,7 +9,7 @@ const ASSISTANT_STORAGE_KEY = 'soilsight-assistant-store-v1';
 const GENERAL_WELCOME_MESSAGE: PlanChatMessage = {
   role: 'assistant',
   content:
-    '你好，我是 SoilSight 规划工作台。当前系统主线聚焦新疆特色作物 profile 评分，你可以直接咨询棉花、甜菜、玉米、水盐、灌溉、盐碱治理、干旱风险或新疆农业相关问题；如果需要针对具体地块规划，请从地图进入并带入地块上下文。',
+    '你好，我是天山土智规划工作台。当前系统主线聚焦新疆特色作物 profile 评分，你可以直接咨询棉花、甜菜、玉米、水盐、灌溉、盐碱治理、干旱风险或新疆农业相关问题；如果需要针对具体地块规划，请从地图进入并带入地块上下文。',
 };
 
 const createConversationId = () => `general-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;

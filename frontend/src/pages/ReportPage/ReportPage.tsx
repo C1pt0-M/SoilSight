@@ -114,7 +114,7 @@ const ReportPage: React.FC = () => {
       <article className="report-card">
         <header className="report-header">
           <div>
-            <p className="report-kicker">SoilSight 规划报告</p>
+            <p className="report-kicker">天山土智规划报告</p>
             <h1>地块土壤质量规划与模拟报告</h1>
             <p className="report-subtitle">基于当前地块评估结果、规划摘要与模拟结果生成</p>
           </div>
