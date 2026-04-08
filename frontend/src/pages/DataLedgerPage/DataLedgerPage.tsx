@@ -197,7 +197,6 @@ const DataLedgerPage: React.FC = () => {
     const healthyPct = (summaryScopeStats.reduce((sum, s) => sum + s.healthy_pct * s.pixel_count, 0) / totalPixels).toFixed(1);
     const subHealthyPct = (summaryScopeStats.reduce((sum, s) => sum + s.sub_healthy_pct * s.pixel_count, 0) / totalPixels).toFixed(1);
     const unhealthyPct = (summaryScopeStats.reduce((sum, s) => sum + s.unhealthy_pct * s.pixel_count, 0) / totalPixels).toFixed(1);
-    const highPriorityCount = summaryScopeStats.filter((item) => item.priority_level === '高').length;
     const dominantConstraintWeights = summaryScopeStats.reduce<Record<string, number>>((acc, item) => {
       const key = item.dominant_constraint || '未判定';
       acc[key] = (acc[key] ?? 0) + item.pixel_count;
@@ -212,7 +211,6 @@ const DataLedgerPage: React.FC = () => {
       subHealthyPct,
       unhealthyPct,
       regionCount: summaryScopeStats.length,
-      highPriorityCount,
       dominantConstraint,
     };
   }, [summaryScopeStats]);
@@ -293,11 +291,6 @@ const DataLedgerPage: React.FC = () => {
                 <div className="summary-card-label">区域分级结构</div>
                 <div className="summary-card-value">{summaryData.healthyPct}%</div>
                 <div className="summary-card-unit">健康 / {summaryData.subHealthyPct}% 亚健康 / {summaryData.unhealthyPct}% 不健康</div>
-              </div>
-              <div className="summary-card">
-                <div className="summary-card-label">重点治理区数量</div>
-                <div className="summary-card-value">{summaryData.highPriorityCount}</div>
-                <div className="summary-card-unit">建议优先级为高的地州 / 区县</div>
               </div>
               <div className="summary-card">
                 <div className="summary-card-label">全疆主导约束</div>
