@@ -1,7 +1,8 @@
-import { BarChart3, Bot, Info, Layout, Map } from 'lucide-react';
+import { BarChart3, Bot, Info, Map } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import { preloadRouteChunk } from '../../app/routeChunks';
 import { useAssistantStore } from '../../store/assistantStore';
+import logoImage from '../../../天山土智_logo.png';
 import './AppHeader.css';
 
 const AppHeader: React.FC = () => {
@@ -10,10 +11,10 @@ const AppHeader: React.FC = () => {
     <header className="app-header">
       <div className="header-left">
         <NavLink to="/" className="logo">
-          <Layout className="logo-icon" />
+          <img className="logo-icon" src={logoImage} alt="天山土智 logo" />
           <span className="logo-text">天山土智</span>
         </NavLink>
-        <div className="scene-tag">新疆特色作物土壤质量评估与规划建议</div>
+        <div className="scene-tag">基于多源数据融合的新疆特色作物土壤健康评估与规划系统</div>
         <div className="data-tag">2010–2025 生长季 · 500m</div>
       </div>
       <nav className="header-nav">

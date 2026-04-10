@@ -40,6 +40,12 @@ interface CountyStat {
 
 type SortKey = 'name' | 'shi_mean' | 'healthy_pct' | 'sub_healthy_pct' | 'unhealthy_pct' | 'pixel_count';
 
+const PROFILE_COVERAGE_AREA_KM2: Record<string, number> = {
+  cotton: 17796.5,
+  maize: 17338.25,
+  sugarbeet: 838.25,
+};
+
 interface SortHeaderProps {
   label: string;
   field: SortKey;
@@ -192,7 +198,7 @@ const DataLedgerPage: React.FC = () => {
   const summaryData = useMemo(() => {
     if (summaryScopeStats.length === 0) return null;
     const totalPixels = summaryScopeStats.reduce((sum, s) => sum + s.pixel_count, 0);
-    const totalArea = (totalPixels * 0.25).toFixed(0);
+    const totalArea = PROFILE_COVERAGE_AREA_KM2[activeScoreProfileId] ?? (totalPixels * 0.25);
     const weightedSHI = (summaryScopeStats.reduce((sum, s) => sum + s.shi_mean * s.pixel_count, 0) / totalPixels).toFixed(1);
     const healthyPct = (summaryScopeStats.reduce((sum, s) => sum + s.healthy_pct * s.pixel_count, 0) / totalPixels).toFixed(1);
     const subHealthyPct = (summaryScopeStats.reduce((sum, s) => sum + s.sub_healthy_pct * s.pixel_count, 0) / totalPixels).toFixed(1);
@@ -213,7 +219,7 @@ const DataLedgerPage: React.FC = () => {
       regionCount: summaryScopeStats.length,
       dominantConstraint,
     };
-  }, [summaryScopeStats]);
+  }, [activeScoreProfileId, summaryScopeStats]);
 
   const priorityClass = (level?: string | null) => {
     if (level === '高') return 'priority-high';
@@ -278,8 +284,8 @@ const DataLedgerPage: React.FC = () => {
           {!requestState.loading && !requestState.error && summaryData && (
             <div className="summary-cards">
               <div className="summary-card">
-                <div className="summary-card-label">分析覆盖面积</div>
-                <div className="summary-card-value">{summaryData.totalArea}</div>
+                <div className="summary-card-label">有效分析范围</div>
+                <div className="summary-card-value">{summaryData.totalArea.toFixed(1)}</div>
                 <div className="summary-card-unit">km²</div>
               </div>
               <div className="summary-card">
@@ -293,7 +299,7 @@ const DataLedgerPage: React.FC = () => {
                 <div className="summary-card-unit">健康 / {summaryData.subHealthyPct}% 亚健康 / {summaryData.unhealthyPct}% 不健康</div>
               </div>
               <div className="summary-card">
-                <div className="summary-card-label">全疆主导约束</div>
+                <div className="summary-card-label">当前作物口径下最常见短板</div>
                 <div className="summary-card-value">{summaryData.dominantConstraint}</div>
                 <div className="summary-card-unit">{summaryData.regionCount} 个地州 + 县级行政区画像汇总</div>
               </div>

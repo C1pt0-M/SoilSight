@@ -202,3 +202,4 @@ scripts/*
 !data/**/xj_province.geojson
 !data/**/xj_prefectures.geojson
 !data/**/xj_counties.geojson
+frontend/天山土智_logo.png
